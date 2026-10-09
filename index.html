@@ -1,0 +1,2799 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F3F0">
+<meta name="description" content="Notlar, iş takibi ve hatırlatmalar. / Notes, tracking and reminders.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="preload" href="./archivo.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Çentik">
+<title>Çentik</title>
+<style>
+/* ======================================================================
+   ÇENTİK — görsel dil: şerit metre. Sarı şerit + siyah çentikler tek
+   vurgu; geri kalan her şey sakin, nötr. Yazı: Archivo (genişlik ekseni
+   rakamlarda daralır, metinde normal kalır).
+   ====================================================================== */
+@font-face{
+  font-family:"Archivo"; src:url("./archivo.woff2") format("woff2");
+  font-weight:400 800; font-stretch:62% 100%; font-style:normal; font-display:swap;
+}
+:root{
+  --tape:#FFCF24; --tape-ink:#18170E; --tape-dim:#E2B40C;
+  --bg:#F2F3F0; --surface:#FFFFFF; --sunk:#E8EAE6;
+  --ink:#17191B; --ink2:#3F4549; --muted:#636A6F;
+  --line:#D3D6D1; --line2:#E4E6E2;
+  --red:#BF251D; --red-soft:#FBE7E4;
+  --focus:#17191B; --scrim:rgba(18,20,22,.46);
+  --chip-l:94.5%; --chip-c:.04; --chip-tl:37%; --chip-tc:.115;
+  --font:"Archivo","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --tape:#F7C61C; --tape-ink:#18170E; --tape-dim:#C99C06;
+    --bg:#1A1C1E; --surface:#222528; --sunk:#141618;
+    --ink:#EDEEEA; --ink2:#CDD0CC; --muted:#9CA2A5;
+    --line:#3C4145; --line2:#2E3236;
+    --red:#FF7C6D; --red-soft:#3A2321;
+    --focus:#F7C61C; --scrim:rgba(0,0,0,.62);
+    --chip-l:31%; --chip-c:.05; --chip-tl:87%; --chip-tc:.09;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --tape:#F7C61C; --tape-ink:#18170E; --tape-dim:#C99C06;
+  --bg:#1A1C1E; --surface:#222528; --sunk:#141618;
+  --ink:#EDEEEA; --ink2:#CDD0CC; --muted:#9CA2A5;
+  --line:#3C4145; --line2:#2E3236;
+  --red:#FF7C6D; --red-soft:#3A2321;
+  --focus:#F7C61C; --scrim:rgba(0,0,0,.62);
+  --chip-l:31%; --chip-c:.05; --chip-tl:87%; --chip-tc:.09;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0; background:var(--bg); color:var(--ink); font:400 16px/1.45 var(--font); font-stretch:100%;
+  -webkit-font-smoothing:antialiased; overscroll-behavior-y:none}
+button,input,select,textarea{font:inherit; font-stretch:inherit; color:inherit; letter-spacing:inherit}
+button{cursor:pointer; border:0; background:none; padding:0; -webkit-tap-highlight-color:transparent; text-align:inherit; touch-action:manipulation}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+::placeholder{color:var(--muted); opacity:1}
+[hidden]{display:none!important}
+.vh{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap}
+svg{display:block}
+
+/* ---------- kabuk ---------- */
+.app{max-width:720px; margin:0 auto; min-height:100dvh; display:flex; flex-direction:column}
+.head{position:sticky; top:0; z-index:20; background:var(--bg)}   /* arama çubuğu + çalan hatırlatmalar: liste kaydırılsa da görünür */
+.top{display:flex; align-items:center; gap:6px;
+  padding:calc(var(--safe-t) + 10px) 10px 10px 12px; border-bottom:1px solid var(--line2)}
+.brand{display:flex; align-items:center; gap:9px; flex:none; margin-right:4px;
+  font-size:22px; font-weight:800; font-stretch:72%; line-height:1}
+.brand svg{width:34px; height:34px}
+.brand b{display:none; font-weight:inherit}
+@media (min-width:600px){ .brand b{display:inline} }
+.search{flex:1; min-width:0; position:relative}
+.search input{width:100%; height:42px; border:1px solid var(--line); background:var(--surface); border-radius:8px;
+  padding:0 10px 0 38px; font-size:16px}
+.search svg{position:absolute; left:10px; top:11px; width:20px; height:20px; color:var(--muted); pointer-events:none}
+.ib{width:42px; height:42px; display:grid; place-items:center; border-radius:8px; color:var(--ink2); position:relative; flex:none}
+.ib svg{width:22px; height:22px}
+@media (hover:hover){ .ib:hover{background:var(--sunk)} }
+.ib .dot{position:absolute; top:6px; right:5px; width:11px; height:11px; border-radius:50%;
+  background:var(--tape); border:1.5px solid var(--tape-ink)}
+.ib .dot.bad{background:var(--red); border-color:var(--bg)}
+
+main{flex:1; display:flex; flex-direction:column}
+main > *{flex:1; padding-bottom:calc(96px + var(--safe-b))}
+
+/* ---------- bildirim şeritleri ---------- */
+.banner{display:flex; align-items:center; gap:10px; padding:10px 12px 10px 14px; font-size:14.5px; line-height:1.35;
+  border-bottom:1px solid var(--line2); background:var(--surface)}
+.banner p{margin:0; flex:1; min-width:0}
+.banner .act{flex:none; font-weight:680; font-size:14px; padding:8px 12px; border-radius:6px; border:1.5px solid currentColor}
+.banner .x{flex:none; width:40px; height:40px; display:grid; place-items:center; border-radius:6px}
+.banner .x svg{width:18px; height:18px}
+.banner.warn{background:var(--tape); color:var(--tape-ink); border-bottom-color:var(--tape-ink)}
+.banner.bad{background:var(--red-soft)}
+.banner.bad p b{color:var(--red)}
+#rings:not(:empty){padding-bottom:8px; border-bottom:1px solid var(--line2)}
+.ring{margin:8px 12px 0; padding:12px 12px 12px 14px; background:var(--tape); color:var(--tape-ink);
+  border:1.5px solid var(--tape-ink); border-radius:10px; box-shadow:0 3px 0 var(--tape-ink);
+  display:grid; grid-template-columns:auto 1fr; gap:4px 12px; align-items:center}
+.ring-t{font-size:24px; font-weight:780; font-stretch:64%; font-variant-numeric:tabular-nums; line-height:1}
+.ring-n{font-weight:650; overflow-wrap:anywhere}
+.ring-a{grid-column:1 / -1; display:flex; gap:8px; margin-top:6px}
+.ring-a button{font-weight:680; font-size:14px; padding:8px 12px; border-radius:6px; border:1.5px solid var(--tape-ink)}
+.ring-a button.solid{background:var(--tape-ink); color:var(--tape)}
+.ring :focus-visible,.banner.warn :focus-visible{outline-color:var(--tape-ink)}   /* sarı zeminde koyu çerçeve */
+
+/* ---------- alt çubuk ---------- */
+.tabs{position:fixed; left:0; right:0; bottom:0; z-index:20; pointer-events:none}
+.tabs-in{max-width:720px; margin:0 auto; display:grid; grid-template-columns:1fr auto 1fr; align-items:end;
+  background:var(--surface); border-top:1px solid var(--line); padding:0 8px var(--safe-b); pointer-events:auto}
+.tab{height:62px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  font-size:13px; font-weight:620; color:var(--muted); position:relative}
+.tab svg{width:22px; height:22px}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"]::before{content:""; position:absolute; top:-1px; left:50%; width:40px; height:5px; margin-left:-20px;
+  background:var(--tape); border:1.5px solid var(--tape-ink); border-top:0; border-radius:0 0 3px 3px}
+.add{width:62px; height:62px; margin:0 16px 12px; border-radius:16px; background:var(--tape); color:var(--tape-ink);
+  display:grid; place-items:center; border:1.5px solid var(--tape-ink); box-shadow:0 3px 0 var(--tape-ink);
+  transform:translateY(-8px)}
+.add:active{transform:translateY(-6px); box-shadow:0 1px 0 var(--tape-ink)}
+.add svg{width:28px; height:28px}
+
+/* ---------- ajanda: şerit metre ---------- */
+.agenda{position:relative; --tw:60px}
+.agenda::before{content:""; position:absolute; left:0; top:0; bottom:0; width:var(--tw);
+  background:var(--tape); border-right:1.5px solid var(--tape-ink)}
+.agenda::after{content:""; position:absolute; left:0; top:0; bottom:0; width:var(--tw); pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom, var(--tape-ink) 0 1.5px, transparent 1.5px 40px) right top / 13px 100% no-repeat,
+    repeating-linear-gradient(to bottom, var(--tape-ink) 0 1px, transparent 1px 8px) right top / 7px 100% no-repeat;
+  opacity:.82}
+.day{position:relative; display:grid; grid-template-columns:var(--tw) minmax(0,1fr)}
+.day-mark{position:relative; z-index:1; padding:13px 0 12px 10px; color:var(--tape-ink)}
+.day-num{display:block; font-size:31px; line-height:.92; font-weight:790; font-stretch:62%;
+  font-variant-numeric:tabular-nums}
+.day-wd{display:block; font-size:12.5px; font-weight:680; font-stretch:78%; margin-top:3px}
+.day.is-today .day-mark{align-self:start; background:var(--tape-ink); color:var(--tape); margin-right:1.5px}
+.day.is-late .day-mark{padding:0}
+.day.is-late .day-mark::before{content:""; position:absolute; inset:0 1.5px 0 0;
+  background:repeating-linear-gradient(135deg, #C3271F 0 7px, var(--tape) 7px 15px)}
+.day-body{padding-bottom:10px}
+.day-h{display:flex; align-items:baseline; flex-wrap:wrap; gap:2px 8px; padding:14px 14px 4px; margin:0; font-size:15.5px; font-weight:720}
+.day-h small{font-size:13.5px; font-weight:480; color:var(--muted)}
+.day.is-late .day-h{color:var(--red)}
+.day-none{padding:4px 14px 10px; margin:0; font-size:14.5px; color:var(--muted)}
+
+/* ---------- satır ---------- */
+.row{display:grid; grid-template-columns:46px minmax(0,1fr); border-bottom:1px solid var(--line2)}
+.row:last-child{border-bottom-color:transparent}
+.st{width:46px; height:48px; display:grid; place-items:center; align-self:start; margin-top:2px; border-radius:8px; touch-action:manipulation}
+.st i{width:22px; height:22px; border-radius:6px; border:1.75px solid var(--ink2); display:grid; place-items:center; transition:transform .12s}
+.st:active i{transform:scale(.86)}
+.st[data-st="doing"] i{border-color:var(--ink); background:linear-gradient(90deg, var(--tape) 0 50%, transparent 50%)}
+.st[data-st="wait"] i{border-style:dashed}
+.st[data-st="wait"] i::before{content:""; width:7px; height:9px; border:solid var(--ink2); border-width:0 2.5px}
+.st[data-st="done"] i{background:var(--tape); border-color:var(--tape-ink)}
+.st[data-st="done"] i::before{content:""; width:11px; height:6px; border:solid var(--tape-ink); border-width:0 0 2.5px 2.5px;
+  transform:translateY(-1.5px) rotate(-45deg)}
+.row-open{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; padding:11px 14px 11px 0; min-height:52px; width:100%}
+@media (hover:hover){ .row-open:hover .row-t{text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px} }
+.row-main{display:block; min-width:0}
+.row-t{display:block; font-size:16px; font-weight:570; line-height:1.3; overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden}
+.row-t.none{color:var(--muted); font-weight:450}
+.row.is-done .row-t{color:var(--muted); font-weight:450; text-decoration:line-through; text-decoration-thickness:1.5px}
+.row-x{display:block; font-size:14.5px; color:var(--muted); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.row-m{display:flex; flex-wrap:wrap; align-items:center; gap:5px 6px; margin-top:6px}
+.row-m:empty{display:none}
+.row-r{display:flex; flex-direction:column; align-items:flex-end; gap:5px; padding-top:1px}
+.when{display:flex; align-items:center; gap:5px; font-size:15.5px; font-weight:740; font-stretch:72%;
+  font-variant-numeric:tabular-nums; white-space:nowrap; line-height:1.25}
+.when.sub{font-size:13px; font-weight:620; font-stretch:80%; color:var(--muted)}
+.when.is-late{color:var(--red)}
+.when svg{width:15px; height:15px; flex:none}
+.when .unsent{color:var(--red)}
+.mini{display:inline-flex; align-items:center; gap:3px; font-size:13px; font-weight:620; font-stretch:84%; color:var(--muted);
+  font-variant-numeric:tabular-nums}
+.mini svg{width:15px; height:15px}
+
+/* ---------- etiket ---------- */
+.chip{display:inline-flex; align-items:center; gap:5px; max-width:100%; font-size:12.5px; font-weight:640; font-stretch:86%;
+  line-height:1; padding:4px 7px; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:oklch(var(--chip-l) calc(var(--chip-c) * var(--on,1)) var(--h,0));
+  color:oklch(var(--chip-tl) calc(var(--chip-tc) * var(--on,1)) var(--h,0))}
+.h0{--on:0} .h1{--h:25} .h2{--h:55} .h3{--h:98} .h4{--h:150} .h5{--h:198} .h6{--h:256} .h7{--h:302} .h8{--h:352}
+button.chip{min-height:38px; padding:0 11px; font-size:14.5px; border:1.5px solid transparent; flex:none}
+button.chip[aria-pressed="true"]{border-color:currentColor; box-shadow:inset 0 0 0 1px currentColor; font-weight:740}
+button.chip:disabled{opacity:.45; cursor:default}
+button.chip[aria-pressed="true"]::before{content:""; width:9px; height:5px; border:solid currentColor; border-width:0 0 2px 2px;
+  transform:translateY(-1.5px) rotate(-45deg); flex:none}
+.swatch{width:22px; height:22px; border-radius:5px; flex:none; background:oklch(66% calc(.15 * var(--on,1)) var(--h,0))}
+
+/* ---------- notlar ---------- */
+.fbar{display:flex; gap:6px; overflow-x:auto; padding:10px 12px; scrollbar-width:none; border-bottom:1px solid var(--line2)}
+.fbar::-webkit-scrollbar{display:none}
+.seg{flex:none; height:38px; padding:0 13px; border-radius:6px; border:1px solid var(--line); background:var(--surface);
+  font-size:14.5px; font-weight:620; color:var(--ink2); white-space:nowrap; display:inline-flex; align-items:center; gap:6px}
+.seg[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.seg .n{font-weight:480; font-stretch:80%; font-variant-numeric:tabular-nums}
+.sec-h{display:flex; align-items:center; gap:8px; padding:18px 14px 6px; margin:0; font-size:15.5px; font-weight:720}
+.sec-h::before{content:""; width:5px; height:15px; background:var(--tape); border:1.5px solid var(--tape-ink); border-radius:1.5px; flex:none}
+.sec-h small{font-weight:480; color:var(--muted); font-size:13.5px; flex:none}
+.sec-h,.day-h,.tg-n{overflow-wrap:anywhere; min-width:0}   /* boşluksuz uzun adlar sayfayı genişletmesin */
+
+.more{padding:16px 14px 8px; text-align:center}
+.empty{padding:64px 28px 40px; text-align:center}
+.empty h2{font-size:20px; font-weight:740; margin:0 0 6px}
+.empty p{margin:0 auto 20px; max-width:34ch; color:var(--muted)}
+.agenda .empty{padding:36px 20px 40px; text-align:left}
+.agenda .empty p{margin-left:0}
+
+/* ---------- düğmeler, alanlar ---------- */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 16px; border-radius:8px;
+  font-weight:680; font-size:15px; border:1.5px solid var(--ink); background:transparent; color:var(--ink); text-align:center}
+.btn.pri{background:var(--tape); color:var(--tape-ink); border-color:var(--tape-ink); box-shadow:0 2px 0 var(--tape-ink)}
+.btn.pri:active{transform:translateY(1px); box-shadow:0 1px 0 var(--tape-ink)}
+.btn.quiet{border-color:var(--line); font-weight:620}
+.btn.danger{border-color:var(--red); color:var(--red)}
+.btn:disabled{opacity:.45; cursor:default; box-shadow:none}
+.btn svg{width:18px; height:18px}
+.btn.sm{min-height:38px; padding:0 12px; font-size:14.5px}
+.in{height:44px; border:1px solid var(--line); background:var(--bg); border-radius:8px; padding:0 10px; font-size:16px; min-width:0}
+select.in{max-width:100%}
+textarea.in{height:auto; padding:10px; line-height:1.4; width:100%; resize:vertical;
+  font-family:ui-monospace,Menlo,Consolas,monospace}
+.link{color:inherit; text-decoration:underline; text-underline-offset:3px; font-weight:620}
+a.link{display:inline-flex; align-items:center; min-height:40px}
+
+/* ---------- sayfa (dialog) ---------- */
+dialog{border:0; padding:0; color:var(--ink); background:var(--surface); max-width:none; max-height:none}
+dialog::backdrop{background:var(--scrim)}
+.sheet{width:100%; margin:auto 0 0; max-height:94dvh; border-radius:16px 16px 0 0; overflow:hidden; flex-direction:column}
+.sheet[open]{display:flex; animation:sheet-up .16s ease-out}
+.sheet.tall{height:94dvh}
+@keyframes sheet-up{from{transform:translateY(22px); opacity:0}}
+@media (min-width:720px){
+  .sheet{width:640px; margin:auto; border-radius:14px; max-height:88dvh}
+  .sheet.tall{height:88dvh}
+}
+.sheet-h{display:flex; align-items:center; gap:4px; padding:8px 8px 8px 6px; border-bottom:1px solid var(--line2); flex:none}
+.sheet-h h2{font-size:17.5px; font-weight:740; margin:0 0 0 6px; flex:1; min-width:0}
+.sheet-h .state{flex:1; font-size:13.5px; color:var(--muted); padding-left:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.sheet-b{overflow-y:auto; padding:0 16px calc(24px + var(--safe-b)); overscroll-behavior:contain; flex:1; min-height:0}
+.ib[aria-pressed="true"]{color:var(--tape-ink); background:var(--tape)}
+
+/* ---------- düzenleyici ---------- */
+.ed-title{display:block; width:100%; border:0; background:transparent; outline:0; resize:none; overflow:hidden;
+  font-size:22px; font-weight:700; line-height:1.25; padding:16px 0 4px}
+.ed-body{display:block; width:100%; border:0; background:transparent; outline:0; resize:none; overflow:hidden;
+  font-size:16px; line-height:1.5; padding:6px 0 16px; min-height:80px}
+.ed-title::placeholder,.ed-body::placeholder{color:var(--muted); font-weight:450}
+.fg{border-top:1px solid var(--line2); padding:14px 0 16px}
+.fg.first{border-top:0}
+.fg-l{display:flex; align-items:center; gap:6px; margin:0 0 9px; font-size:13.5px; font-weight:680; color:var(--muted)}
+.fr{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.fr + .fr{margin-top:10px}
+.grow{flex:1; min-width:0}
+.stack{display:flex; flex-direction:column; gap:12px; margin-top:12px}
+.stack:empty{display:none}
+.stack > *{margin:0}
+.mt{margin-top:14px}
+.w-num{width:84px}
+.fr-l{flex:none; width:72px; font-size:14.5px; color:var(--ink2); font-weight:560}
+.note{margin:8px 0 0; font-size:14px; line-height:1.4; color:var(--muted); display:flex; gap:7px; align-items:flex-start}
+.note svg{width:16px; height:16px; flex:none; margin-top:2px}
+.note.bad{color:var(--red)}
+.note.ok{color:var(--ink2)}
+.stseg{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px}
+.stseg button{display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 2px 8px; border:1px solid var(--line);
+  border-radius:8px; font-size:13.5px; font-weight:620; color:var(--ink2); text-align:center; line-height:1.25}
+.stseg button .st{width:30px; height:32px; margin:0; pointer-events:none; align-self:center}
+.stseg button[aria-pressed="true"]{border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); color:var(--ink)}
+.tg-g{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px}
+.tg-g:first-of-type{margin-top:0}
+.tg-n{flex:none; width:100%; font-size:13px; font-weight:620; color:var(--ink2); margin-bottom:-1px}
+.tg-new{margin-top:14px}
+.tg-new > input{flex:1 1 10em}
+.swatch-plus{width:22px; height:22px; flex:none; color:var(--muted); padding:2px}
+.cl{list-style:none; margin:0; padding:0}
+.cl li{display:grid; grid-template-columns:34px minmax(0,1fr) 38px; align-items:center}
+.cl-ck{display:grid; place-items:center; width:34px; height:42px; cursor:pointer}
+.cl input[type=checkbox]{width:20px; height:20px; margin:0; accent-color:var(--tape)}
+.cl input[type=text]{border:0; border-bottom:1px solid transparent; background:transparent; height:42px; font-size:16px; outline:0; min-width:0; width:100%}
+.cl input[type=text]:focus{border-bottom-color:var(--line)}
+.cl li.is-done input[type=text]{color:var(--muted); text-decoration:line-through}
+.cl .ib{width:38px; height:38px; color:var(--muted)}
+.cl .ib svg{width:17px; height:17px}
+.cl-add{display:grid; grid-template-columns:34px minmax(0,1fr); align-items:center; color:var(--muted)}
+.cl-add svg{width:18px; height:18px; margin-left:3px}
+
+/* ---------- ayarlar ---------- */
+.set-sec{padding:18px 0; border-top:1px solid var(--line2)}
+.set-sec:first-child{border-top:0}
+.set-sec h3{font-size:16.5px; font-weight:740; margin:0 0 4px}
+.set-sec .hint{font-size:14.5px; color:var(--muted); margin:0 0 12px; max-width:62ch}
+.steps{list-style:none; margin:14px 0 0; padding:0; counter-reset:step}
+.steps > li{position:relative; padding:0 0 18px 42px; counter-increment:step; min-height:30px}
+.steps > li::before{content:counter(step); position:absolute; left:0; top:-1px; width:28px; height:28px; border-radius:6px;
+  border:1.5px solid var(--ink2); display:grid; place-items:center; font-size:16px; font-weight:780; font-stretch:68%; color:var(--ink2)}
+.steps > li.is-ok::before{content:""; background:var(--tape); border-color:var(--tape-ink)}
+.steps > li.is-ok::after{content:""; position:absolute; left:8px; top:7px; width:12px; height:6px; border:solid var(--tape-ink);
+  border-width:0 0 2.5px 2.5px; transform:rotate(-45deg)}
+.steps > li.is-off::before{border-color:var(--line); color:var(--muted)}
+.steps > li.is-off h4{color:var(--muted); font-weight:620}
+.steps h4{margin:2px 0 4px; font-size:15.5px; font-weight:700}
+.steps p{margin:0 0 8px; font-size:14.5px; color:var(--muted); overflow-wrap:anywhere}
+.steps p.val{color:var(--ink); overflow-wrap:anywhere}
+.steps p.err{color:var(--red)}
+.sw{display:flex; align-items:center; gap:10px; font-size:15px; font-weight:560; min-height:44px}
+.sw input{width:20px; height:20px; accent-color:var(--tape); flex:none}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:14.5px; margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0; overflow-wrap:anywhere}
+
+/* ---------- etiket yöneticisi ---------- */
+.tm-g{border:1px solid var(--line); border-radius:10px; margin-top:12px; overflow:hidden}
+.tm-gh{display:flex; align-items:center; gap:4px; padding:6px 8px 6px 4px; background:var(--bg)}
+.tm-gh > .swatch{margin:0 8px}
+.tm-gh input{flex:1; min-width:0; height:40px; border:0; background:transparent; font-size:16px; font-weight:700; outline:0}
+.tm-gh .fixed{flex:1; font-size:16px; font-weight:700; color:var(--ink2)}
+.tm-t{display:flex; align-items:center; gap:6px; padding:2px 8px 2px 12px; border-top:1px solid var(--line2)}
+.tm-t input{flex:1; min-width:0; height:42px; border:0; background:transparent; font-size:16px; outline:0}
+.tm-t select{height:38px; max-width:38%; border:1px solid var(--line); border-radius:6px; background:var(--surface); font-size:16px; padding:0 6px}
+.tm-t .ib,.tm-gh .ib{width:38px; height:38px; color:var(--muted)}
+.tm-t .ib svg,.tm-gh .ib svg{width:17px; height:17px}
+.hues{display:flex; flex-wrap:wrap; gap:8px; padding:10px 12px; border-top:1px solid var(--line2); background:var(--bg)}
+.hues button{width:40px; height:40px; border-radius:8px; display:grid; place-items:center; border:2px solid transparent}
+.hues button[aria-pressed="true"]{border-color:var(--ink)}
+
+/* ---------- menü, toast ---------- */
+.menu{position:fixed; z-index:50; min-width:190px; background:var(--surface); border:1.5px solid var(--ink); border-radius:10px;
+  box-shadow:0 3px 0 var(--ink); padding:4px; display:none}
+.menu.is-open{display:block}
+.menu button{display:flex; align-items:center; gap:4px; width:100%; padding:2px 14px 2px 2px; border-radius:6px; font-size:15.5px; font-weight:560}
+.menu button .st{pointer-events:none; margin:0; height:44px}
+.menu button[aria-checked="true"]{background:var(--sunk); font-weight:720}
+.toast{position:fixed; left:50%; bottom:calc(104px + var(--safe-b)); z-index:60; transform:translate(-50%,10px);
+  background:var(--ink); color:var(--bg); padding:11px 12px 11px 16px; border-radius:8px; font-size:15px; font-weight:560; line-height:1.3;
+  display:flex; align-items:center; gap:12px; width:max-content; max-width:min(92vw,520px);
+  opacity:0; pointer-events:none; transition:opacity .15s, transform .15s}
+.toast.is-on{opacity:1; transform:translate(-50%,0); pointer-events:auto}
+.toast:empty{padding:0}
+.toast button{flex:none; color:inherit; font-weight:740; min-height:40px; margin:-6px 0; padding:0 10px; border-radius:6px;
+  text-decoration:underline; text-underline-offset:3px}
+.toast :focus-visible{outline-color:var(--bg)}
+dialog .toast{bottom:calc(24px + var(--safe-b))}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important; transition:none!important}
+}
+</style>
+</head>
+<body>
+<noscript><p style="padding:24px">Çentik için JavaScript gerekli. / Çentik needs JavaScript.</p></noscript>
+
+<div class="app" id="app">
+  <div class="head">
+    <header class="top" id="top"></header>
+    <div id="rings"></div>
+  </div>
+  <div id="banners"></div>
+  <main id="main"></main>
+</div>
+<nav class="tabs" id="tabs"></nav>
+
+<dialog class="sheet tall" id="dlgEd"></dialog>
+<dialog class="sheet" id="dlgFilter"></dialog>
+<dialog class="sheet tall" id="dlgSet"></dialog>
+<dialog class="sheet tall" id="dlgTags"></dialog>
+<div class="menu" id="menu" role="menu"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+"use strict";
+/* ======================================================================
+   ÇENTİK — not, iş takibi, hatırlatma
+   ----------------------------------------------------------------------
+   Tek dosya, derleme adımı yok. Bölümler sırayla:
+     1 sabitler · 2 dil · 3 yardımcılar · 4 depolama (IndexedDB)
+     5 veri ve kurallar · 6 bulut (Firebase) · 7 Google Takvim
+     8 uygulama içi alarm · 9 arayüz · 10 açılış
+
+   Veri bu cihazda IndexedDB'de durur; uygulama hesapsız da çalışır.
+   Eşitleme ve Takvim isteğe bağlıdır: Ayarlar'a kendi Firebase web
+   config'ini yapıştırırsın. Bu dosyada hiçbir anahtar yoktur; config
+   yalnızca o cihazın localStorage'ında saklanır, depoya girmez.
+
+   Uygulama adını değiştirmek için bu dosyada ve manifest.webmanifest
+   içinde "Çentik" geçen her yeri değiştir (APP.name, <title>,
+   apple-mobile-web-app-title, arayüz metinleri). Küçük harfli "centik"
+   depolama adıdır (IndexedDB, localStorage, Firestore yolu); o değişirse
+   mevcut notlar görünmez olur, ona dokunma.
+   ====================================================================== */
+
+/* ============================ 1 · sabitler ============================ */
+const APP = { name: "Çentik", ver: "1.0.0" };
+const FB_VER = "12.19.0";                       // gstatic'ten yüklenen Firebase JS SDK sürümü
+const NS = "centik";
+const LS = { cfg: NS + "-fb-config", lang: NS + "-lang", theme: NS + "-theme", debug: NS + "-debug" };
+const CAL_API = "https://www.googleapis.com/calendar/v3";
+const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.app.created";
+const TOKENINFO = "https://oauth2.googleapis.com/tokeninfo";
+const CAL_V = 1;                                // etkinlik kurma mantığının sürümü; Cal.build değişirse artır (bkz. Cal.diff)
+const STATUSES = ["open", "doing", "wait", "done"];
+const REPEATS = ["", "daily", "weekdays", "weekly", "monthly", "yearly"];
+const RRULE = {
+  daily: "RRULE:FREQ=DAILY", weekdays: "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR",
+  weekly: "RRULE:FREQ=WEEKLY", monthly: "RRULE:FREQ=MONTHLY", yearly: "RRULE:FREQ=YEARLY"
+};
+const REM_PRESETS = [0, 10, 60, 1440];          // dakika; Takvim sınırı: en fazla 5 adet, 0–40320
+const REM_MAX = 5, REM_LIMIT = 40320;
+const EVENT_MIN = 30;                           // Takvim etkinliğinin süresi (dk)
+const HUE_COUNT = 9;                            // 0 = gri, 1–8 = renkler (CSS .h0–.h8)
+const BODY_MAX = 100000;
+const DEV_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch (e) { return "UTC"; } })();
+
+/* ============================== 2 · dil ============================== */
+const I18N = {
+  tr: {
+    tab_agenda: "Ajanda", tab_notes: "Notlar", add: "Yeni not", search_ph: "Notlarda ara",
+    a_filter: "Filtre", a_settings: "Ayarlar", a_back: "Kapat", a_views: "Görünümler", a_note: "Not",
+    st_open: "Açık", st_doing: "Sürüyor", st_wait: "Bekliyor", st_done: "Tamam",
+    f_active: "Aktif", f_all: "Hepsi",
+    late: "Geciken", today: "Bugün", tomorrow: "Yarın", yesterday: "Dün", later: "Sonra",
+    today_none: "Bugün için not yok.",
+    ag_empty_t: "Tarihli not yok", ag_empty_p: "Bir nota tarih verdiğinde burada gün gün sıralanır.",
+    no_empty_t: "İlk notunu ekle", no_empty_p: "Aklındakini yaz; tarih, hatırlatma ve etiket sonra eklenir.",
+    no_match_t: "Eşleşen not yok", no_match_p: "Arama ya da filtre bu notları gizliyor olabilir.",
+    no_active_t: "Açık not kalmadı", no_active_p: "Tamamlananlar “Tamam” bölümünde durur.",
+    no_st_t: "Bu bölümde not yok", no_st_p: "Başka bir bölüme bak ya da yeni bir not ekle.",
+    clear_filters: "Filtreleri temizle", untitled: "Başlıksız not", more: "{n} not daha göster",
+    a_done: "Tamamlandı olarak işaretle", a_undone: "Tamamlanmadı olarak işaretle",
+    ed_title_ph: "Başlık", ed_body_ph: "Not", ed_status: "Durum", ed_when: "Ne zaman", ed_date: "Tarih", ed_time: "Saat",
+    q_today: "Bugün", q_tomorrow: "Yarın", q_week: "1 hafta sonra", ed_clear: "Tarihi kaldır",
+    ed_remind: "Hatırlat", ed_repeat: "Tekrar", need_time: "Hatırlatma kurmak için saat seç.",
+    rem_max: "En fazla 5 hatırlatma eklenebilir.", rem_limit: "Hatırlatma en çok 4 hafta önce olabilir.",
+    rem_0: "Tam saatinde", rem_min: "{n} dk önce", rem_hour: "{n} saat önce", rem_day: "{n} gün önce",
+    rem_custom: "Özel", rem_add: "Ekle", rem_num: "Süre", rem_unit: "Birim", u_min: "dakika", u_hour: "saat", u_day: "gün",
+    rep_: "Tekrar yok", rep_daily: "Her gün", rep_weekdays: "Hafta içi her gün", rep_weekly: "Her hafta",
+    rep_monthly: "Her ay", rep_yearly: "Her yıl",
+    ed_tags: "Etiketler", ed_tag_new: "Yeni etiket", ed_tag_ph: "Etiket adı", no_group: "Grupsuz",
+    ed_tags_none: "Henüz etiket yok. İlkini aşağıdan ekle.",
+    ed_cl: "Kontrol listesi", ed_cl_ph: "Madde ekle", a_del_item: "Maddeyi sil",
+    lim_cl: "Bir notta en çok {n} madde olur; fazlası eklenmedi.", lim_body: "Not en çok {n} karakter olabilir; fazlası alınmadı.",
+    a_pin: "Sabitle", a_unpin: "Sabitlemeyi kaldır", pinned: "Sabitlendi", a_delete: "Notu sil", saved: "Kaydedildi",
+    cal_ok: "Google Takvim'de.", cal_wait: "Takvim'e henüz gönderilmedi.",
+    cal_off: "Takvim bağlı değil: hatırlatma yalnızca uygulama açıkken gösterilir.",
+    cal_allday: "Saat yoksa Takvim'de tüm gün etkinliği olur, bildirim gelmez.",
+    cal_will: "Notu kapatınca Google Takvim'e işlenir.",
+    tz_other: "Saat dilimi: {tz}",
+    send: "Gönder", connect: "Bağla",
+    t_deleted: "Not silindi", t_done: "Tamamlandı", t_gone: "Bu not başka bir cihazda silindi.", undo: "Geri al", t_next: "Sonraki: {when}", t_sent: "Takvim'e gönderildi.",
+    t_sent_n: "{n} not Takvim'e işlendi.", t_weekend: "Hafta içi tekrar için tarih pazartesiye alındı.",
+    b_pending: "{n} hatırlatma Takvim'e gönderilmedi.",
+    b_orphan: "Eski Çentik takvimi silinmeyi bekliyor; silinene dek hatırlatmalar iki kez gelebilir.", b_orphan_btn: "Temizle",
+    b_hint: "Hatırlatmalar şu an yalnızca uygulama açıkken gösterilir. Telefon bildirimi için Google Takvim'i bağla.",
+    b_storage: "Bu tarayıcı veriyi kalıcı saklayamıyor. Notlar sayfa kapanınca kaybolur.",
+    b_update: "Yeni sürüm hazır.", reload: "Yenile", retry: "Tekrar dene",
+    b_sync: "Notlar eşitlenemiyor.", b_cal: "Hatırlatmalar Takvim'e gönderilemiyor.",
+    ring_open: "Aç", ring_done: "Tamamla", ring_close: "Kapat",
+    fl_title: "Filtre", fl_tags: "Etiketler",
+    fl_tags_hint: "Aynı gruptan seçtiklerinden biri, farklı grupların hepsi eşleşmeli.",
+    fl_no_tags: "Etiket ekledikçe burada filtreleyebilirsin.",
+    fl_group: "Notları bölümle", fl_group_none: "Bölümleme yok", fl_group_st: "Duruma göre", fl_clear: "Temizle",
+    fl_rest: "Diğerleri",
+    se_title: "Ayarlar", se_look: "Görünüm", se_lang: "Dil", se_theme: "Tema",
+    th_auto: "Cihaza uy", th_light: "Açık", th_dark: "Koyu",
+    se_cloud: "Eşitleme ve Google Takvim",
+    se_cloud_hint: "İkisi de isteğe bağlı. Bağlamazsan notlar yalnızca bu cihazda durur, hatırlatmalar yalnızca uygulama açıkken gösterilir.",
+    s1_t: "Firebase projesini bağla",
+    s1_p: "Firebase'in verdiği firebaseConfig bloğunu yapıştır. Yalnızca bu cihazda saklanır; koda ya da depoya yazılmaz.",
+    s1_ph: "const firebaseConfig = { apiKey: \"…\", authDomain: \"…\", projectId: \"…\" };",
+    s1_btn: "Bağla", s1_bad: "Bu metinde apiKey, authDomain ve projectId bulunamadı.",
+    s1_nostore: "Tarayıcı bu ayarı saklayamadı. Gizli pencerede ya da site verileri kapalıyken bağlantı kurulamaz.",
+    s1_remove: "Bağlantıyı kaldır",
+    s1_remove_q: "Firebase bağlantısı bu cihazdan kaldırılsın mı? Notların bu cihazda kalır.",
+    s2_t: "Google ile giriş yap", s2_p: "Giriş ekranında takvim iznini de onayla.",
+    s2_btn: "Google ile giriş yap", s2_out: "Çıkış yap", s2_load: "Firebase yükleniyor…",
+    s2_fail: "Firebase yüklenemedi. Bağlantını kontrol edip sayfayı yenile.",
+    s3_t: "Notları eşitle", s3_wait: "İlk eşitleme bekleniyor…", s3_ok: "Güncel.",
+    s3_dirty: "{n} değişiklik gönderilmeyi bekliyor.",
+    s4_t: "Hatırlatmaları Takvim'e işle", s4_sw: "Tarihli notları Google Takvim'e işle",
+    s4_p: "Çentik kendi adına ayrı bir takvim açar ve yalnızca ona yazar; diğer takvimlerini göremez.",
+    s4_ok: "Takvim güncel.", s4_pending: "{n} not gönderilmeyi bekliyor.",
+    s4_idle: "Tarihli ilk notta ya da test alarmında takvim açılır.",
+    s4_off: "Kapalıyken değişiklikler Takvim'e gönderilmez. Takvimdeki mevcut etkinlikler olduğu gibi kalır ve bildirim vermeyi sürdürür.",
+    s4_test: "Test alarmı gönder", s4_resync: "Takvimi baştan eşitle", s4_busy: "Takvim'e işleniyor…",
+    s4_test_done: "Test notu eklendi. 3 dakika sonra telefonunda bildirim çıkmalı.",
+    s4_test_title: "Çentik test alarmı",
+    s4_test_body: "Bu bildirim geldiyse kurulum tamam. Notu silebilirsin.",
+    cal_desc: "Çentik notlarının hatırlatmaları. Bu takvimi uygulama yönetir.",
+    e_popup_blocked: "Tarayıcı giriş penceresini engelledi. Tekrar dokun ya da bu site için açılır pencerelere izin ver.",
+    e_popup_closed: "Giriş penceresi kapatıldı.",
+    e_domain: "Bu adres Firebase'de yetkili değil. Authentication → Settings → Authorized domains bölümüne {host} ekle.",
+    e_provider: "Firebase'de Google girişi açık değil: Authentication → Sign-in method → Google → Enable.",
+    e_network: "Ağa ulaşılamadı.",
+    e_mismatch: "Farklı bir Google hesabı seçildi. Giriş yaptığın hesabı seç.",
+    e_env: "Giriş bu ortamda çalışmıyor. Uygulamayı https adresinden aç.",
+    e_rules: "Firestore kuralları erişime izin vermiyor. README'deki kuralları Firestore → Rules bölümüne yapıştırıp yayınla.",
+    e_quota: "Firestore günlük kotası doldu. Yarın kendiliğinden devam eder.",
+    e_item: "{n} kayıt buluta gönderilemedi (çok büyük ya da bozuk olabilir). Diğerleri eşitlendi; o kaydı düzenleyince yeniden denenir.",
+    e_generic: "Beklenmeyen hata: {msg}",
+    e_cal_api: "Bu projede Google Calendar API kapalı.", e_cal_api_link: "Calendar API'yi aç",
+    e_cal_scope: "Takvim izni verilmemiş. Tekrar giriş yapıp takvim kutusunu işaretle.",
+    e_cal_scope_btn: "Takvim iznini ver",
+    e_cal_wait_sync: "Takvim, ilk not eşitlemesi tamamlanınca kurulur.",
+    e_cal_rate: "Google Takvim şu an çok istek aldı. Biraz sonra tekrar dene.",
+    e_cal_some: "{n} not Takvim'e yazılamadı; diğerleri gönderildi.",
+    e_cal_auth: "Takvim oturumunun süresi doldu. Göndermek için tekrar dokun.",
+    e_offline: "Çevrimdışısın.",
+    se_notif: "Bu cihazda bildirim",
+    se_notif_hint: "Takvim'e gönderilmemiş hatırlatmalar için, uygulama açıkken bildirim gösterir.",
+    se_notif_btn: "Bildirim izni ver", se_notif_on: "İzin verildi.",
+    se_notif_denied: "Tarayıcı ayarlarında engellenmiş.", se_notif_none: "Bu tarayıcı bildirimi desteklemiyor.",
+    se_tags: "Etiketler ve gruplar", se_tags_hint: "Grup, etiketlerin ortak rengini ve filtredeki yerini belirler.",
+    se_tags_btn: "Etiketleri düzenle",
+    tm_add_group: "Grup ekle", tm_group_ph: "Grup adı", tm_tag_ph: "Etiket ekle",
+    tm_del_group_q: "“{name}” grubu silinsin mi? İçindeki etiketler silinmez, grupsuz kalır.",
+    tm_del_tag_q: "“{name}” etiketi silinsin mi? Notlardan da kalkar.", tm_dup: "Bu ad zaten kullanılıyor.",
+    a_del_group: "Grubu sil", a_del_tag: "Etiketi sil", a_color: "Renk", a_move: "Gruba taşı",
+    hue_0: "Gri", hue_1: "Kırmızı", hue_2: "Turuncu", hue_3: "Sarı", hue_4: "Yeşil", hue_5: "Turkuaz", hue_6: "Mavi", hue_7: "Mor", hue_8: "Pembe",
+    se_backup: "Yedek", se_backup_hint: "Tüm notları, etiketleri ve grupları tek dosyada indirir. Yükleme eksik ve silinmiş kayıtları geri getirir; daha yeni olanlara dokunmaz.",
+    bk_export: "Yedek indir", bk_import: "Yedekten yükle",
+    bk_bad: "Dosya okunamadı. Geçerli bir Çentik yedeği değil.", bk_done: "{n} kayıt yüklendi.",
+    se_device: "Bu cihaz", dv_storage: "Kalıcı depolama", dv_yes: "Açık", dv_no: "Tarayıcı karar veriyor",
+    dv_version: "Sürüm", dv_tz: "Saat dilimi", dv_reset: "Bu cihazdaki verileri sil",
+    dv_reset_q1: "Bu cihazdaki tüm notlar ve bağlantı ayarları silinecek. Buluttaki kopya etkilenmez. Devam edilsin mi?",
+    dv_reset_dirty: "Buluta henüz gönderilmemiş {n} değişiklik var; onlar da silinecek.",
+    dv_reset_q2: "Geri alınamaz. Emin misin?",
+    merge_q: "Bu cihazdaki notlar {email} hesabına da eklenecek. Devam edilsin mi?"
+  },
+  en: {
+    tab_agenda: "Agenda", tab_notes: "Notes", add: "New note", search_ph: "Search notes",
+    a_filter: "Filter", a_settings: "Settings", a_back: "Close", a_views: "Views", a_note: "Note",
+    st_open: "Open", st_doing: "In progress", st_wait: "Waiting", st_done: "Done",
+    f_active: "Active", f_all: "All",
+    late: "Overdue", today: "Today", tomorrow: "Tomorrow", yesterday: "Yesterday", later: "Later",
+    today_none: "Nothing for today.",
+    ag_empty_t: "No dated notes", ag_empty_p: "Give a note a date and it lines up here, day by day.",
+    no_empty_t: "Add your first note", no_empty_p: "Write it down; date, reminder and tags can come later.",
+    no_match_t: "No matching notes", no_match_p: "Search or a filter may be hiding them.",
+    no_active_t: "No open notes left", no_active_p: "Completed notes are under “Done”.",
+    no_st_t: "No notes in this section", no_st_p: "Look in another section or add a new note.",
+    clear_filters: "Clear filters", untitled: "Untitled note", more: "Show {n} more",
+    a_done: "Mark as done", a_undone: "Mark as not done",
+    ed_title_ph: "Title", ed_body_ph: "Note", ed_status: "Status", ed_when: "When", ed_date: "Date", ed_time: "Time",
+    q_today: "Today", q_tomorrow: "Tomorrow", q_week: "In 1 week", ed_clear: "Remove date",
+    ed_remind: "Remind", ed_repeat: "Repeat", need_time: "Pick a time to set a reminder.",
+    rem_max: "Up to 5 reminders can be added.", rem_limit: "A reminder can be at most 4 weeks before.",
+    rem_0: "At the time", rem_min: "{n} min before", rem_hour: "{n} h before", rem_day: "{n} d before",
+    rem_custom: "Custom", rem_add: "Add", rem_num: "Amount", rem_unit: "Unit", u_min: "minutes", u_hour: "hours", u_day: "days",
+    rep_: "No repeat", rep_daily: "Every day", rep_weekdays: "Every weekday", rep_weekly: "Every week",
+    rep_monthly: "Every month", rep_yearly: "Every year",
+    ed_tags: "Tags", ed_tag_new: "New tag", ed_tag_ph: "Tag name", no_group: "No group",
+    ed_tags_none: "No tags yet. Add the first one below.",
+    ed_cl: "Checklist", ed_cl_ph: "Add item", a_del_item: "Delete item",
+    lim_cl: "A note can hold up to {n} items; the rest were not added.", lim_body: "A note can hold up to {n} characters; the rest was left out.",
+    a_pin: "Pin", a_unpin: "Unpin", pinned: "Pinned", a_delete: "Delete note", saved: "Saved",
+    cal_ok: "In Google Calendar.", cal_wait: "Not sent to Calendar yet.",
+    cal_off: "Calendar isn't connected: the reminder only shows while the app is open.",
+    cal_allday: "Without a time it becomes an all-day event in Calendar, with no notification.",
+    cal_will: "Written to Google Calendar when you close the note.",
+    tz_other: "Time zone: {tz}",
+    send: "Send", connect: "Connect",
+    t_deleted: "Note deleted", t_done: "Completed", t_gone: "This note was deleted on another device.", undo: "Undo", t_next: "Next: {when}", t_sent: "Sent to Calendar.",
+    t_sent_n: "{n} notes written to Calendar.", t_weekend: "Moved to Monday for the weekday repeat.",
+    b_pending: "{n} reminders not sent to Calendar.", b_pending_1: "1 reminder not sent to Calendar.",
+    b_orphan: "An old Çentik calendar is waiting to be deleted; until then reminders may arrive twice.", b_orphan_btn: "Clean up",
+    b_hint: "Reminders only show while the app is open. Connect Google Calendar for phone notifications.",
+    b_storage: "This browser can't keep data. Notes are lost when the page closes.",
+    b_update: "A new version is ready.", reload: "Reload", retry: "Try again",
+    b_sync: "Notes can't sync.", b_cal: "Reminders can't be sent to Calendar.",
+    ring_open: "Open", ring_done: "Complete", ring_close: "Dismiss",
+    fl_title: "Filter", fl_tags: "Tags",
+    fl_tags_hint: "Any one tag within a group, and every group you pick from, must match.",
+    fl_no_tags: "Once you add tags you can filter by them here.",
+    fl_group: "Section the notes", fl_group_none: "No sections", fl_group_st: "By status", fl_clear: "Clear",
+    fl_rest: "Others",
+    se_title: "Settings", se_look: "Appearance", se_lang: "Language", se_theme: "Theme",
+    th_auto: "Match device", th_light: "Light", th_dark: "Dark",
+    se_cloud: "Sync and Google Calendar",
+    se_cloud_hint: "Both are optional. Without them notes stay on this device and reminders only show while the app is open.",
+    s1_t: "Connect a Firebase project",
+    s1_p: "Paste the firebaseConfig block Firebase gave you. It is stored on this device only, never in the code or the repo.",
+    s1_ph: "const firebaseConfig = { apiKey: \"…\", authDomain: \"…\", projectId: \"…\" };",
+    s1_btn: "Connect", s1_bad: "No apiKey, authDomain and projectId found in this text.",
+    s1_nostore: "The browser couldn't store this setting. It can't connect in a private window or with site data turned off.",
+    s1_remove: "Remove connection",
+    s1_remove_q: "Remove the Firebase connection from this device? Your notes stay on this device.",
+    s2_t: "Sign in with Google", s2_p: "Approve the calendar permission on the sign-in screen too.",
+    s2_btn: "Sign in with Google", s2_out: "Sign out", s2_load: "Loading Firebase…",
+    s2_fail: "Firebase couldn't load. Check your connection and reload the page.",
+    s3_t: "Sync notes", s3_wait: "Waiting for the first sync…", s3_ok: "Up to date.",
+    s3_dirty: "{n} changes waiting to be sent.", s3_dirty_1: "1 change waiting to be sent.",
+    s4_t: "Write reminders to Calendar", s4_sw: "Write dated notes to Google Calendar",
+    s4_p: "Çentik creates its own separate calendar and writes only to it; it can't see your other calendars.",
+    s4_ok: "Calendar is up to date.", s4_pending: "{n} notes waiting to be sent.", s4_pending_1: "1 note waiting to be sent.",
+    s4_idle: "The calendar is created with your first dated note or the test alarm.",
+    s4_off: "While off, changes aren't sent to Calendar. Events already in the calendar stay as they are and keep notifying.",
+    s4_test: "Send a test alarm", s4_resync: "Re-sync the calendar", s4_busy: "Writing to Calendar…",
+    s4_test_done: "Test note added. A notification should appear on your phone in 3 minutes.",
+    s4_test_title: "Çentik test alarm",
+    s4_test_body: "If this notification arrived, setup is complete. You can delete the note.",
+    cal_desc: "Reminders for Çentik notes. This calendar is managed by the app.",
+    e_popup_blocked: "The browser blocked the sign-in window. Tap again, or allow pop-ups for this site.",
+    e_popup_closed: "The sign-in window was closed.",
+    e_domain: "This address isn't authorized in Firebase. Add {host} under Authentication → Settings → Authorized domains.",
+    e_provider: "Google sign-in isn't enabled in Firebase: Authentication → Sign-in method → Google → Enable.",
+    e_network: "Couldn't reach the network.",
+    e_mismatch: "A different Google account was chosen. Pick the one you signed in with.",
+    e_env: "Sign-in doesn't work in this environment. Open the app from its https address.",
+    e_rules: "Firestore rules deny access. Paste the rules from the README under Firestore → Rules and publish.",
+    e_quota: "The Firestore daily quota is used up. It resumes by itself tomorrow.",
+    e_item: "{n} records couldn't be sent to the cloud (they may be too large or malformed). The rest synced; editing that record retries it.",
+    e_item_1: "1 record couldn't be sent to the cloud (it may be too large or malformed). The rest synced; editing that record retries it.",
+    e_generic: "Unexpected error: {msg}",
+    e_cal_api: "The Google Calendar API is off in this project.", e_cal_api_link: "Enable the Calendar API",
+    e_cal_scope: "Calendar permission wasn't granted. Sign in again and tick the calendar box.",
+    e_cal_scope_btn: "Grant calendar permission",
+    e_cal_wait_sync: "The calendar is set up once the first note sync completes.",
+    e_cal_rate: "Google Calendar is receiving too many requests. Try again shortly.",
+    e_cal_some: "{n} notes couldn't be written to Calendar; the rest were sent.", e_cal_some_1: "1 note couldn't be written to Calendar; the rest were sent.",
+    e_cal_auth: "The Calendar session expired. Tap again to send.",
+    e_offline: "You're offline.",
+    se_notif: "Notifications on this device",
+    se_notif_hint: "For reminders not sent to Calendar, shows a notification while the app is open.",
+    se_notif_btn: "Allow notifications", se_notif_on: "Allowed.",
+    se_notif_denied: "Blocked in the browser settings.", se_notif_none: "This browser doesn't support notifications.",
+    se_tags: "Tags and groups", se_tags_hint: "A group sets the shared color of its tags and their place in the filter.",
+    se_tags_btn: "Edit tags",
+    tm_add_group: "Add group", tm_group_ph: "Group name", tm_tag_ph: "Add tag",
+    tm_del_group_q: "Delete the group “{name}”? Its tags are kept and become ungrouped.",
+    tm_del_tag_q: "Delete the tag “{name}”? It is removed from notes too.", tm_dup: "That name is already in use.",
+    a_del_group: "Delete group", a_del_tag: "Delete tag", a_color: "Color", a_move: "Move to group",
+    hue_0: "Gray", hue_1: "Red", hue_2: "Orange", hue_3: "Yellow", hue_4: "Green", hue_5: "Teal", hue_6: "Blue", hue_7: "Purple", hue_8: "Pink",
+    se_backup: "Backup", se_backup_hint: "Downloads all notes, tags and groups in one file. Loading brings back missing and deleted records; newer ones are left alone.",
+    bk_export: "Download backup", bk_import: "Load from backup",
+    bk_bad: "Couldn't read the file. It isn't a valid Çentik backup.", bk_done: "{n} records loaded.", bk_done_1: "1 record loaded.",
+    se_device: "This device", dv_storage: "Persistent storage", dv_yes: "On", dv_no: "Up to the browser",
+    dv_version: "Version", dv_tz: "Time zone", dv_reset: "Delete the data on this device",
+    dv_reset_q1: "All notes and connection settings on this device will be deleted. The cloud copy is not affected. Continue?",
+    dv_reset_dirty: "{n} changes haven't reached the cloud yet; they will be deleted too.", dv_reset_dirty_1: "1 change hasn't reached the cloud yet; it will be deleted too.",
+    dv_reset_q2: "This can't be undone. Are you sure?",
+    merge_q: "The notes on this device will also be added to {email}. Continue?"
+  }
+};
+let lang = lsGet(LS.lang);
+if (lang !== "tr" && lang !== "en") lang = (navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en";
+function t(key, vars) {
+  const d = I18N[lang] || I18N.en;
+  let s = key in d ? d[key] : (key in I18N.en ? I18N.en[key] : key);
+  if (vars) for (const k in vars) s = s.split("{" + k + "}").join(String(vars[k]));
+  return s;
+}
+
+/* =========================== 3 · yardımcılar =========================== */
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+const $ = (sel, root) => (root || document).querySelector(sel);
+const pad = (n) => String(n).padStart(2, "0");
+const B32 = "0123456789abcdefghijklmnopqrstuv";       // base32hex: Takvim etkinlik kimliğinde izinli tek alfabe
+function newId() {
+  let ms = Date.now(), s = "";
+  for (let i = 0; i < 9; i++) { s = B32[ms % 32] + s; ms = Math.floor(ms / 32); }
+  const r = crypto.getRandomValues(new Uint8Array(11));
+  for (const b of r) s += B32[b & 31];
+  return s;
+}
+function hash(str) {                                    // cyrb53
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+const fold = (s) => String(s || "").toLocaleLowerCase("tr").replace(/ı/g, "i");   // I, İ, ı, i aynı sayılır
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+/* ---- tarih: gün metni "YYYY-AA-GG", saat metni "SS:DD" ---- */
+function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function parseYmd(s) { const p = s.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+function addDays(s, n) { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); }
+function today() { return ymd(new Date()); }
+function dayDiff(a, b) { return Math.round((parseYmd(a) - parseYmd(b)) / 864e5); }
+function daysIn(y, m) { return new Date(y, m, 0).getDate(); }
+const isYmd = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && ymd(parseYmd(s)) === s;
+const isHm = (s) => typeof s === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+function wallAdd(d, tm, minutes) {                      // duvar saatine dakika ekler (saat dilimi hesabı yok)
+  const p = d.split("-").map(Number), q = tm.split(":").map(Number);
+  const x = new Date(Date.UTC(p[0], p[1] - 1, p[2], q[0], q[1] + minutes));
+  return { d: x.getUTCFullYear() + "-" + pad(x.getUTCMonth() + 1) + "-" + pad(x.getUTCDate()), t: pad(x.getUTCHours()) + ":" + pad(x.getUTCMinutes()) };
+}
+const tzFmt = Object.create(null), tzSeen = new Map();
+function tzValid(tz) {
+  if (typeof tz !== "string" || !tz || tz.length > 64) return false;
+  if (!tzSeen.has(tz)) { let ok = true; try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); } catch (e) { ok = false; } tzSeen.set(tz, ok); }
+  return tzSeen.get(tz);
+}
+const tzPlausible = (tz) => typeof tz === "string" && tz.length <= 64 && /^[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z0-9_+-]+){0,3}$/.test(tz);
+function tzOffsetMin(tz, utcMs) {                       // tz'nin o andaki UTC farkı (dk, doğu +)
+  let f = tzFmt[tz];
+  if (!f) f = tzFmt[tz] = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const o = {};
+  for (const p of f.formatToParts(new Date(utcMs))) if (p.type !== "literal") o[p.type] = Number(p.value);
+  return Math.round((Date.UTC(o.year, o.month - 1, o.day, o.hour % 24, o.minute, o.second) - utcMs) / 60000);
+}
+function zonedToUtc(d, tm, tz) {                        // tz'deki duvar saati → an (ms)
+  const p = d.split("-").map(Number), q = tm.split(":").map(Number);
+  if (tz === DEV_TZ) return new Date(p[0], p[1] - 1, p[2], q[0], q[1]).getTime();
+  const guess = Date.UTC(p[0], p[1] - 1, p[2], q[0], q[1]);
+  try {                                                   // geçişin bir gün öncesi ve sonrasındaki farklar: en çok iki aday an
+    const offs = [...new Set([tzOffsetMin(tz, guess - 864e5), tzOffsetMin(tz, guess + 864e5)])];
+    const ok = offs.filter((o) => tzOffsetMin(tz, guess - o * 60000) === o).map((o) => guess - o * 60000);
+    if (ok.length) return Math.min(...ok);                // kış saatine dönüşte iki kez yaşanan saat: ilki (cihazın kendi saati ve Takvim gibi)
+    return guess - Math.min(...offs) * 60000;             // yaz saatine geçişte var olmayan saat: ileri alınır
+  } catch (e) { return new Date(p[0], p[1] - 1, p[2], q[0], q[1]).getTime(); }
+}
+const fmtCache = {};
+function fmt(opts) {
+  const key = lang + JSON.stringify(opts);
+  return fmtCache[key] || (fmtCache[key] = new Intl.DateTimeFormat(lang === "tr" ? "tr-TR" : "en-GB", opts));
+}
+function fmtDayShort(d) {
+  const sameYear = d.slice(0, 4) === today().slice(0, 4);
+  return fmt(sameYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" }).format(parseYmd(d));
+}
+const fmtDayLong = (d) => fmt({ day: "numeric", month: "long" }).format(parseYmd(d));
+const fmtWeekday = (d) => fmt({ weekday: "long" }).format(parseYmd(d));
+const fmtWd = (d) => fmt({ weekday: "short" }).format(parseYmd(d));
+function relDay(d) {
+  const k = dayDiff(d, today());
+  if (k === 0) return t("today");
+  if (k === 1) return t("tomorrow");
+  if (k === -1) return t("yesterday");
+  if (k > 1 && k < 7) return fmtWeekday(d);
+  return fmtDayShort(d);
+}
+function remLabel(m) {
+  if (m === 0) return t("rem_0");
+  if (m % 1440 === 0) return t("rem_day", { n: m / 1440 });
+  if (m % 60 === 0) return t("rem_hour", { n: m / 60 });
+  return t("rem_min", { n: m });
+}
+
+/* ---- DOM ---- */
+const SVGNS = "http://www.w3.org/2000/svg";
+const ICONS = {                                         // sabit, güvenilir çizimler (kullanıcı verisi girmez)
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+  filter: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5a7.5 7.5 0 0 0-2.6 1.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="m6 6 12 12M18 6 6 18"/>',
+  back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  pin: '<path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/>',
+  repeat: '<path d="M17 3l3 3-3 3M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 0 1-3 3H4"/>',
+  agenda: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/>',
+  notes: '<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/>',
+  list: '<path d="m4 7 1.5 1.5L8 6M4 16l1.5 1.5L8 15M11 7h9M11 16h9"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.5"/>',
+  alert: '<path d="M12 4 2.5 20h19zM12 10v5M12 17.5v.5"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4M9 15l2 2 4-4"/>'
+};
+function icon(name, cls) {
+  const s = document.createElementNS(SVGNS, "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor");
+  s.setAttribute("stroke-width", "1.8"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
+  s.setAttribute("aria-hidden", "true");
+  if (cls) s.setAttribute("class", cls);
+  s.innerHTML = ICONS[name] || "";
+  return s;
+}
+function logo() {
+  const s = document.createElementNS(SVGNS, "svg");
+  s.setAttribute("viewBox", "0 0 512 512"); s.setAttribute("aria-hidden", "true");
+  s.innerHTML = '<rect x="12" y="12" width="488" height="488" rx="108" fill="#FFCF24" stroke="#18170E" stroke-width="24"/>' +
+    '<g fill="none" stroke="#18170E" stroke-width="40" stroke-linecap="round"><path d="M150 150v212M220 150v212M290 150v212M360 150v212"/><path d="M96 330 416 182"/></g>';
+  return s;
+}
+/* h(): DOM kurar. Kullanıcı metni yalnızca textContent/value ile girer; innerHTML yoktur. */
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  let value;
+  if (props) for (const k in props) {
+    const v = props[k];
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "text") el.textContent = v;
+    else if (k === "value") value = v;
+    else if (k === "dataset") Object.assign(el.dataset, v);
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (typeof v === "boolean") { if (k in el) el[k] = v; else el.setAttribute(k, ""); }
+    else el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat(4)) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  if (value !== undefined) el.value = value;
+  return el;
+}
+
+/* ======================= 4 · depolama (IndexedDB) ======================= */
+/* Tek veritabanı "centik": items (her kayıt: not, etiket, grup, takvim durumu, ayar) ve kv (cihaza özel).
+   Aynı adresteki başka uygulamalarla çakışmasın diye her ad "centik" ile başlar. */
+const DB = {
+  db: null, ok: false, dead: false, opening: null, busy: null, queue: new Map(), timer: 0,
+  /* ok: bağlantı kullanılabilir · dead: IndexedDB hiç açılamıyor (gizli pencere vb.), yazmalar bırakılır */
+  open() {
+    if (DB.opening) return DB.opening;
+    DB.opening = new Promise((resolve) => {
+      let req;
+      try { req = indexedDB.open(NS, 1); } catch (e) { resolve(false); return; }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains("items")) db.createObjectStore("items", { keyPath: "key" });
+        if (!db.objectStoreNames.contains("kv")) db.createObjectStore("kv", { keyPath: "k" });
+      };
+      req.onsuccess = () => {
+        const db = DB.db = req.result;
+        DB.ok = true;
+        db.onversionchange = () => { try { db.close(); } catch (e) {} if (DB.db === db) DB.ok = false; };
+        db.onclose = () => { if (DB.db === db) DB.ok = false; };   // tarayıcı bağlantıyı kendisi kapattı: sıradaki yazmada yeniden açılır
+        resolve(true);
+      };
+      req.onerror = () => resolve(false);
+      req.onblocked = () => resolve(false);
+    }).then((ok) => { DB.opening = null; return ok; });
+    return DB.opening;
+  },
+  all(store) {
+    if (!DB.ok) return Promise.resolve([]);
+    return new Promise((resolve) => {
+      try {
+        const req = DB.db.transaction(store).objectStore(store).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      } catch (e) { resolve([]); }
+    });
+  },
+  /* get: kayıt yoksa null, okunamadıysa undefined döner ("yok" ile "bilmiyorum" karışmasın) */
+  get(store, key) {
+    if (!DB.ok) return Promise.resolve(undefined);
+    return new Promise((resolve) => {
+      try {
+        const req = DB.db.transaction(store).objectStore(store).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(undefined);
+      } catch (e) { resolve(undefined); }
+    });
+  },
+  put(store, val) {                                      // aynı turdaki yazmalar tek işlemde toplanır; veritabanı henüz açılmadıysa bekler
+    if (DB.dead) return;
+    DB.queue.set(store + "\n" + (store === "items" ? val.key : val.k), [store, val, false]);
+    if (!DB.timer) DB.timer = setTimeout(DB.flush, 0);
+  },
+  del(store, key) {
+    if (DB.dead) return;
+    DB.queue.set(store + "\n" + key, [store, key, true]);
+    if (!DB.timer) DB.timer = setTimeout(DB.flush, 0);
+  },
+  flush() {
+    clearTimeout(DB.timer); DB.timer = 0;
+    if (DB.dead || !DB.queue.size) return DB.busy || Promise.resolve();
+    if (DB.busy) return DB.busy.then(DB.flush);            // süren yazma bitsin, sıra bozulmasın
+    const batch = [...DB.queue.entries()]; DB.queue.clear();
+    const job = DB.write(batch, 0).then(() => { if (DB.busy === job) DB.busy = null; });
+    DB.busy = job;
+    return job;
+  },
+  async write(batch, attempt) {
+    if (!DB.ok && !(await DB.open())) { DB.lost(batch, new Error("open")); return; }
+    const done = await new Promise((resolve) => {
+      let tx;
+      try { tx = DB.db.transaction(["items", "kv"], "readwrite"); } catch (e) { resolve(e || true); return; }
+      for (const [, [store, val, gone]] of batch) { if (gone) tx.objectStore(store).delete(val); else tx.objectStore(store).put(val); }
+      tx.oncomplete = () => {                              // yazıldıktan sonra aynı cihazdaki diğer sekmelere haber ver
+        if (chan) for (const [, [store, val, gone]] of batch) if (store === "items") { try { chan.postMessage({ key: gone ? val : val.key }); } catch (e) {} }
+        resolve(null);
+      };
+      tx.onerror = tx.onabort = () => resolve(tx.error || true);
+    });
+    if (!done) return;
+    if (attempt === 0) {                                   // bağlantı kapanmış olabilir: bir kez yeniden açıp aynı yazmayı dene
+      DB.ok = false;
+      try { DB.db.close(); } catch (e) {}
+      return DB.write(batch, 1);
+    }
+    DB.lost(batch, done);
+  },
+  lost(batch, e) {                                       // yazılamadı: kayıtlar bellekte durur, sıradaki yazmayla yeniden denenir
+    for (const [k, v] of batch) if (!DB.queue.has(k)) DB.queue.set(k, v);
+    DB.fail(e);
+  },
+  fail(e) { console.warn("[centik] db", e); UI.storageBad = true; invalidate(); },
+  wipe() {
+    clearTimeout(DB.timer); DB.timer = 0; DB.queue.clear(); DB.dead = true;   // silindikten sonra hiçbir şey yeniden yazılmasın
+    return new Promise((resolve) => {
+      try { if (DB.db) DB.db.close(); } catch (e) {}
+      DB.ok = false;
+      try {
+        const req = indexedDB.deleteDatabase(NS);
+        req.onsuccess = req.onerror = req.onblocked = () => resolve();
+      } catch (e) { resolve(); }                            // IndexedDB yoksa silinecek bir şey de yok
+    });
+  }
+};
+/* kv: cihaza özel küçük değerler (eşitlenmez) */
+const KV = {
+  m: new Map(),
+  get(k, dflt) { return KV.m.has(k) ? KV.m.get(k) : dflt; },
+  set(k, v) { KV.m.set(k, v); DB.put("kv", { k, v }); },
+  /* diskteki değer bozuk olabilir: beklenen türde değilse boş hâli döner */
+  num(k) { const v = KV.m.get(k); return typeof v === "number" && isFinite(v) ? v : 0; },
+  arr(k) { const v = KV.m.get(k); return Array.isArray(v) ? v.filter((x) => typeof x === "string") : []; },
+  obj(k) { const v = KV.m.get(k); return v && typeof v === "object" && !Array.isArray(v) ? v : null; }
+};
+
+/* ========================= 5 · veri ve kurallar ========================= */
+/* Kayıt türleri (k): n = not, t = etiket, g = grup, c = takvim durumu (not başına), m = ortak ayar.
+   Ortak alanlar: id, u (son değişiklik, ms), by (cihaz), del (silindi izi).
+   "_" ile başlayan alanlar cihaza özeldir, buluta ve yedeğe gitmez (_d = gönderilmeyi bekliyor). */
+const S = {
+  items: new Map(), notes: new Map(), tags: new Map(), groups: new Map(), cal: new Map(), meta: new Map(),
+  device: "", lastStamp: 0, tagVer: 0                     // tagVer: etiket adları değişince artar (arama önbelleği için)
+};
+const KIND = Object.assign(Object.create(null), { n: "notes", t: "tags", g: "groups", c: "cal", m: "meta" });   // prototipsiz: "constructor" gibi adlar tür sayılmaz
+const ID_RE = /^[0-9a-v]{5,64}$/, EID_RE = /^[0-9a-v]{5,1024}$/;
+/* geçerli kayıt mı: tür biliniyor, kimlik beklenen alfabede. Bulut, yedek, disk ve diğer sekmeden gelen her şey buradan geçer. */
+const validItem = (it) => !!it && typeof it === "object" && typeof it.k === "string" && !!KIND[it.k] && typeof it.id === "string" && ID_RE.test(it.id);
+const PAGE = 150;                                       // Notlar listesinde bir seferde çizilen satır
+const UI = {
+  tab: "agenda", q: "", qf: [], status: "active", tagSel: new Set(), groupBy: "", limit: PAGE,
+  storageBad: false, update: false, rings: [], hintOff: false, moreFrom: -1
+};
+const keyOf = (it) => it.k + ":" + it.id;
+/* norm: nereden gelirse gelsin (bulut, yedek, eski sürüm) kaydı beklenen biçime getirir; arayüz buna güvenir */
+function norm(it) {
+  const str = (v, max) => (typeof v === "string" ? v.slice(0, max) : "");
+  const u = Number(it.u);
+  it.u = u >= 0 && u <= 8.64e15 ? Math.floor(u) : 0;      // aralık dışı damga sayacı dondurur; 0 sayılır, her gerçek sürüm onu geçer
+  it.by = str(it.by, 40);
+  if (it.del) { it.del = true; return it; }
+  if (it.k === "n") {
+    it.title = str(it.title, 500);
+    it.body = str(it.body, BODY_MAX);
+    it.st = STATUSES.includes(it.st) ? it.st : "open";
+    it.tags = Array.isArray(it.tags) ? it.tags.filter((x) => typeof x === "string" && ID_RE.test(x)).slice(0, 100) : [];
+    it.cl = Array.isArray(it.cl) ? it.cl.filter((c) => c && typeof c === "object" && typeof c.x === "string").slice(0, 500).map((c) => ({ id: str(c.id, 40) || newId().slice(9), x: c.x.slice(0, 500), d: !!c.d })) : [];
+    it.due = it.due && typeof it.due === "object" && isYmd(it.due.d) ? { d: it.due.d, t: isHm(it.due.t) ? it.due.t : "" } : null;
+    it.tz = tzValid(it.tz) || tzPlausible(it.tz) ? it.tz : DEV_TZ;   // bu tarayıcının tanımadığı dilim olduğu gibi kalır (her cihaz aynı etkinliği hesaplasın)
+    it.rem = cleanRems(it.rem);
+    it.rep = REPEATS.includes(it.rep) ? it.rep : "";
+    it.pin = !!it.pin;
+    it.c = Number(it.c) || 0;
+  } else if (it.k === "t" || it.k === "g") {
+    it.name = str(it.name, 80).trim() || "?";
+    it.o = Number(it.o) || 0;
+    if (it.k === "g") it.hue = ((it.hue | 0) % HUE_COUNT + HUE_COUNT) % HUE_COUNT;
+    else it.g = typeof it.g === "string" && ID_RE.test(it.g) ? it.g : "";
+  } else if (it.k === "c") {
+    it.eid = typeof it.eid === "string" && EID_RE.test(it.eid) ? it.eid : it.id;   // Takvim adresine girer: yalnızca izinli alfabe
+    it.h = str(it.h, 40) || "none";
+    it.crit = str(it.crit, 40) || "none";
+    it.v = Number(it.v) || 0;
+    it.cal = str(it.cal, 200);                            // kaydın anlattığı takvim
+  } else if (it.k === "m") {
+    it.calId = str(it.calId, 200);
+    it.on = it.on !== false;
+    it.c = Number(it.c) || 0;
+  }
+  return it;
+}
+/* index: belleğe alır. Görülen en büyük sürüm damgası tutulur; böylece saati geri kalan bir cihazın yeni değişikliği,
+   saati ileri bir cihazdan gelmiş kaydın altında kalmaz (bkz. stamp). */
+function index(it) {
+  norm(it);
+  S.items.set(keyOf(it), it); S[KIND[it.k]].set(it.id, it);
+  if (it.u > S.lastStamp) S.lastStamp = it.u;
+  if (it.k === "t" || it.k === "g") S.tagVer++;
+}
+function unindex(key) { const it = S.items.get(key); if (it) { S.items.delete(key); S[KIND[it.k]].delete(it.id); } }
+function stamp() { S.lastStamp = Math.max(Date.now(), S.lastStamp + 1); return S.lastStamp; }   // her zaman görülen tüm sürümlerden büyük
+function publicCopy(it) { const o = {}; for (const k in it) if (k[0] !== "_" && k !== "key" && it[k] !== undefined) o[k] = it[k]; return o; }
+function persist(it) { it.key = keyOf(it); DB.put("items", it); }
+/* commit: yerel değişiklik. Yeni sürüm damgası alır, gönderilecek olarak işaretlenir. */
+function commit(it) {
+  it.u = stamp(); it.by = S.device; it._d = 1; delete it._bad;
+  index(it); persist(it);
+  Cloud.kick(); invalidate();
+  return it;
+}
+/* sürüm sırası: önce u, eşitse cihaz kimliği. >0 ise a daha yeni. */
+function cmpVer(a, b) { return (a.u || 0) - (b.u || 0) || (a.by === b.by ? 0 : (a.by > b.by ? 1 : -1)); }
+
+const liveTag = (id) => { const x = S.tags.get(id); return x && !x.del ? x : null; };
+const liveGroup = (id) => { const x = S.groups.get(id); return x && !x.del ? x : null; };
+const tagGroup = (tag) => (tag && tag.g && liveGroup(tag.g)) || null;
+const tagHue = (tag) => { const g = tagGroup(tag); return g ? (g.hue | 0) % HUE_COUNT : 0; };
+const byName = (a, b) => (a.o || 0) - (b.o || 0) || fold(a.name).localeCompare(fold(b.name), "tr");
+const liveGroups = () => [...S.groups.values()].filter((g) => !g.del).sort(byName);
+const liveTags = () => [...S.tags.values()].filter((x) => !x.del).sort(byName);
+const tagsOfGroup = (gid) => liveTags().filter((x) => ((tagGroup(x) || {}).id || "") === gid);
+const noteTags = (n) => (n.tags || []).map(liveTag).filter(Boolean).sort(byName);
+
+/* ---- not ---- */
+function blankNote(preset) {
+  return Object.assign({ k: "n", id: newId(), title: "", body: "", st: "open", tags: [], cl: [], pin: false,
+    due: null, tz: DEV_TZ, rem: [], rep: "", c: Date.now() }, preset || {});
+}
+function dueAt(n) {                                      // notun anı (ms); saat yoksa günün başı (cihaz saatiyle)
+  if (!n.due) return 0;
+  return n.due.t ? zonedToUtc(n.due.d, n.due.t, n.tz || DEV_TZ) : parseYmd(n.due.d).getTime();
+}
+function dueLocal(n) {                                   // cihazın saatinde gün ve saat
+  if (!n.due) return null;
+  if (!n.due.t) return { d: n.due.d, t: "" };
+  if ((n.tz || DEV_TZ) === DEV_TZ) return { d: n.due.d, t: n.due.t };
+  const x = new Date(dueAt(n));
+  return { d: ymd(x), t: pad(x.getHours()) + ":" + pad(x.getMinutes()) };
+}
+function isLate(n, now) {
+  if (!n.due || n.st === "done") return false;
+  return n.due.t ? dueAt(n) < (now || Date.now()) : n.due.d < today();
+}
+function whenText(n) {
+  const L = dueLocal(n);
+  return L ? relDay(L.d) + (L.t ? " " + L.t : "") : "";
+}
+/* ---- tekrar ---- */
+function stepDate(d, rep) {
+  const p = d.split("-").map(Number);
+  if (rep === "daily") return addDays(d, 1);
+  if (rep === "weekly") return addDays(d, 7);
+  if (rep === "weekdays") { let x = addDays(d, 1); while ([0, 6].includes(parseYmd(x).getDay())) x = addDays(x, 1); return x; }
+  if (rep === "monthly") {                                // ayın aynı günü; o günü olmayan ay atlanır (Takvim de böyle yapar)
+    let y = p[0], m = p[1];
+    for (let i = 0; i < 60; i++) { m++; if (m > 12) { m = 1; y++; } if (p[2] <= daysIn(y, m)) return y + "-" + pad(m) + "-" + pad(p[2]); }
+  }
+  if (rep === "yearly") { for (let i = 1; i <= 8; i++) if (p[2] <= daysIn(p[0] + i, p[1])) return (p[0] + i) + "-" + pad(p[1]) + "-" + pad(p[2]); }
+  return d;
+}
+function nextDue(n, now) {                               // şimdiden ve mevcut tarihten sonraki ilk tekrar
+  let d = n.due.d;
+  const tz = n.tz || DEV_TZ, td = today();
+  for (let i = 0; i < 4000; i++) {
+    const nx = stepDate(d, n.rep);
+    if (nx === d) break;
+    d = nx;
+    if (n.due.t ? zonedToUtc(d, n.due.t, tz) > now : d > td) break;
+  }
+  return d;
+}
+function weekdayFix(n) {                                 // "hafta içi" tekrarında hafta sonuna denk gelen tarih pazartesiye kayar
+  if (n.rep !== "weekdays" || !n.due) return false;
+  let d = n.due.d, moved = false;
+  while ([0, 6].includes(parseYmd(d).getDay())) { d = addDays(d, 1); moved = true; }
+  if (moved) n.due = { d, t: n.due.t };
+  return moved;
+}
+/* tamamlandı: tekrarlı notta sıradaki tarihe kayar, tekrarsızda durum "done" olur */
+function completeNote(n, now) {
+  if (n.rep && n.due) {
+    n.due = { d: nextDue(n, now || Date.now()), t: n.due.t };
+    n.st = "open"; n.last = now || Date.now();
+    n.cl = (n.cl || []).map((c) => ({ id: c.id, x: c.x, d: false }));
+    return "rolled";
+  }
+  n.st = "done"; n.doneAt = now || Date.now();
+  return "done";
+}
+function setStatus(id, st) {
+  const cur = S.notes.get(id); if (!cur || cur.del) return;
+  const before = clone(publicCopy(cur)), n = clone(publicCopy(cur));
+  let how = "";
+  if (st === "done") how = completeNote(n);
+  else { n.st = st; delete n.doneAt; }
+  commit(n);
+  const undo = () => { commit(before); Cal.kick({ gesture: true }); };
+  if (how === "rolled") toast(t("t_next", { when: whenText(n) }), t("undo"), undo);
+  else if (how === "done") toast(t("t_done"), t("undo"), undo);   // yanlış dokunuş notu listeden kaçırmasın
+  Cal.kick({ gesture: true });
+}
+function deleteNote(id, undoTo) {                        // undoTo: "Geri al"ın döneceği sürüm (verilmezse şimdiki)
+  const cur = S.notes.get(id); if (!cur || cur.del) return;
+  const before = undoTo ? clone(publicCopy(undoTo)) : clone(publicCopy(cur));
+  commit({ k: "n", id, del: true, c: cur.c });            // içerik silinir, yalnızca iz kalır
+  toast(t("t_deleted"), t("undo"), () => { commit(before); Cal.kick({ gesture: true }); });
+  Cal.kick({ gesture: true });
+}
+/* ---- filtre ---- */
+function facets() {                                      // seçili etiketler, gruplarına göre
+  const m = new Map();
+  for (const id of UI.tagSel) {
+    const tag = liveTag(id); if (!tag) continue;
+    const g = (tagGroup(tag) || {}).id || "";
+    if (!m.has(g)) m.set(g, new Set());
+    m.get(g).add(id);
+  }
+  return m;
+}
+function matches(n, noStatus, fx) {                      // fx: facets() sonucu (liste çizilirken bir kez hesaplanıp verilir)
+  if (!noStatus) {
+    if (UI.status === "active") { if (n.st === "done") return false; }
+    else if (UI.status !== "all" && n.st !== UI.status) return false;
+  }
+  if (UI.tagSel.size) {
+    const tags = n.tags || [];
+    for (const ids of (fx || facets()).values()) { let hit = false; for (const id of tags) if (ids.has(id)) { hit = true; break; } if (!hit) return false; }
+  }
+  if (UI.qf.length) {
+    const hay = haystack(n);
+    for (const w of UI.qf) if (!hay.includes(w)) return false;
+  }
+  return true;
+}
+const hayMemo = new WeakMap();                           // not nesnesi değişince (her kayıtta yenisi gelir) kendiliğinden düşer
+function haystack(n) {
+  const c = hayMemo.get(n);
+  if (c && c.v === S.tagVer) return c.h;
+  const h = fold([n.title, n.body].concat((n.cl || []).map((x) => x.x), noteTags(n).map((x) => x.name)).join("\n"));
+  hayMemo.set(n, { v: S.tagVer, h });
+  return h;
+}
+const liveNotes = () => [...S.notes.values()].filter((n) => !n.del);
+function cmpDue(a, b) {
+  const A = dueLocal(a), B = dueLocal(b);
+  return A.d.localeCompare(B.d) || (A.t || "").localeCompare(B.t || "") || fold(a.title).localeCompare(fold(b.title), "tr");
+}
+
+/* ========================= 6 · bulut (Firebase) ========================= */
+/* Eşitleme kuralları:
+   - Kaynak bu cihazdaki IndexedDB'dir; Firestore yalnızca taşıyıcıdır.
+   - Her kayıt tek belgedir: centik/{uid}/items/{tür_id}. Çakışmada sürümü yeni olan kazanır (u, sonra cihaz).
+   - Silme, içeriği boşaltılmış bir iz kaydıdır; böylece eski bir cihaz silineni geri getiremez.
+   - Önce çek, sonra gönder: ilk sunucu yanıtı gelmeden hiçbir şey yazılmaz.
+   - Her yazma koşulludur (işlem içinde oku-karşılaştır-yaz): sunucudaki sürüm bizimkinden yeniyse yazılmaz, o sürüm
+     yerelin yerini alır. Koşulsuz yazma kullanılmaz; çünkü Firestore çevrimdışıyken biriken koşulsuz yazmaları
+     bağlantı gelince, arada başka cihazın gönderdiği daha yeni sürümün üstüne indirir.
+   - Sunucu damgası (_s) imleçtir: her açılışta yalnızca son görülenden sonra değişen belgeler okunur. */
+const CFG_KEYS = ["apiKey", "authDomain", "projectId", "storageBucket", "messagingSenderId", "appId", "measurementId", "authEmulator", "firestoreEmulator"];
+function parseFbConfig(text) {                           // yapıştırılan metni kod olarak çalıştırmaz, yalnızca okur
+  const out = {};
+  const re = /["']?([A-Za-z]\w*)["']?\s*:\s*(["'])((?:(?!\2)[^\\\n]|\\.)*)\2/g;
+  let m;
+  while ((m = re.exec(String(text || "")))) if (CFG_KEYS.includes(m[1])) out[m[1]] = m[3];
+  return out.apiKey && out.authDomain && out.projectId ? out : null;
+}
+function getCfg() {
+  try { const c = JSON.parse(lsGet(LS.cfg) || "null"); return c && c.apiKey && c.authDomain && c.projectId ? c : null; }
+  catch (e) { return null; }
+}
+const isLoopback = (s) => /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(s || "");
+
+const Cloud = {
+  fb: null, ready: false, loading: false, failed: false,
+  user: null, col: null, unsub: null, pulled: false,
+  err: "", errMsg: "", authErr: "",
+  rErr: null, wErr: null,                                 // okuma (dinleyici) ve yazma hatası ayrı tutulur; err/errMsg ikisinin özetidir
+  flushing: false, again: false, gen: 0, kickT: 0, listenT: 0, flushT: 0, hold: 0,
+
+  async init() {
+    const cfg = getCfg();
+    if (!cfg || Cloud.ready || Cloud.loading) return;
+    Cloud.loading = true; Cloud.failed = false;
+    try {
+      const base = "https://www.gstatic.com/firebasejs/" + FB_VER + "/";
+      const mods = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
+      const ap = mods[0], au = mods[1], fs = mods[2];
+      const app = ap.initializeApp({ apiKey: cfg.apiKey, authDomain: cfg.authDomain, projectId: cfg.projectId,
+        storageBucket: cfg.storageBucket, messagingSenderId: cfg.messagingSenderId, appId: cfg.appId });
+      const auth = au.getAuth(app);
+      const db = fs.getFirestore(app);
+      if (isLoopback(cfg.authEmulator)) au.connectAuthEmulator(auth, cfg.authEmulator, { disableWarnings: true });   // yerel geliştirme
+      if (isLoopback(cfg.firestoreEmulator)) { const hp = cfg.firestoreEmulator.replace(/^https?:\/\//, "").replace(/\/$/, "").split(":"); fs.connectFirestoreEmulator(db, hp[0], Number(hp[1] || 8080)); }
+      Cloud.fb = { au, fs, auth, db };
+      Cloud.ready = true;
+      au.onAuthStateChanged(auth, Cloud.onAuth);
+    } catch (e) {
+      console.warn("[centik] firebase", e);
+      Cloud.failed = true;
+    } finally { Cloud.loading = false; refresh(); }
+  },
+
+  provider(hint, consent) {
+    const p = new Cloud.fb.au.GoogleAuthProvider();
+    p.addScope(CAL_SCOPE);
+    const params = {};
+    if (hint) params.login_hint = hint;
+    if (consent) params.prompt = "consent";
+    p.setCustomParameters(params);
+    return p;
+  },
+  /* Açılır pencere tarayıcıda yalnızca dokunuşun içinden açılır; bu yüzden aşağıdaki çağrılar beklemeden yapılır. */
+  signIn() {
+    if (!Cloud.ready) return Promise.resolve();
+    Cloud.authErr = "";
+    return Cloud.fb.au.signInWithPopup(Cloud.fb.auth, Cloud.provider())
+      .then((res) => Cal.takeToken(res), (e) => { Cloud.authErr = authMsg(e); })
+      .then(refresh);
+  },
+  reauth(consent) {
+    const u = Cloud.fb.auth.currentUser;
+    return Cloud.fb.au.reauthenticateWithPopup(u, Cloud.provider(u.email, consent)).then((res) => Cal.takeToken(res));
+  },
+  async signOut() {
+    try { if (Cloud.ready) await Cloud.fb.au.signOut(Cloud.fb.auth); } catch (e) {}
+  },
+  onAuth(user) {
+    Cloud.detach();
+    Cloud.user = user || null;
+    if (user) Cloud.attach(user, Cloud.gen); else Cal.dropToken();
+    refresh();
+  },
+  async attach(user, gen) {
+    const cid = getCfg().projectId + ":" + user.uid;
+    const row = await DB.get("kv", "cloudId");            // diskten okunur: başka bir sekme az önce yazmış olabilir
+    if (gen !== Cloud.gen) return;
+    const prev = row && typeof row.v === "string" ? row.v : String(KV.get("cloudId", "") || "");
+    KV.m.set("cloudId", prev);
+    if (prev !== cid) {
+      if (prev && liveNotes().length && !confirm(t("merge_q", { email: user.email || "" }))) { Cal.dropToken(); Cloud.signOut(); return; }
+      for (const it of [...S.items.values()]) {
+        if (it.k === "c" || it.k === "m") { if (prev) { const key = keyOf(it); unindex(key); DB.del("items", key); } }   // önceki hesabın takvim kayıtları bu hesaba taşınmaz
+        else if (!it._d) { it._d = 1; persist(it); }      // notlar, etiketler, gruplar yeni hesaba gönderilir
+      }
+      KV.set("cursor", null); KV.set("cloudId", cid); KV.set("calRecon", 0); KV.set("calOrphans", []);
+    }
+    Cloud.col = Cloud.fb.fs.collection(Cloud.fb.db, NS, user.uid, "items");
+    Cloud.listen();
+  },
+  detach() {
+    if (Cloud.unsub) { try { Cloud.unsub(); } catch (e) {} }
+    Cloud.unsub = null; Cloud.col = null; Cloud.pulled = false;
+    Cloud.rErr = null; Cloud.wErr = null; Cloud.sum();
+    Cloud.gen++; Cloud.flushing = false; Cloud.again = false; Cloud.hold = 0;   // yarıda kalan gönderim artık bu oturuma ait değil
+    clearTimeout(Cloud.listenT); clearTimeout(Cloud.flushT); clearTimeout(Cloud.kickT); Cloud.flushT = 0;
+  },
+  listen() {
+    const fs = Cloud.fb.fs, cur = KV.obj("cursor"), from = cur && typeof cur.s === "number" && isFinite(cur.s) ? cur : null;
+    const q = from
+      ? fs.query(Cloud.col, fs.where("_s", ">", new fs.Timestamp(Math.max(0, Math.floor(from.s) - 300), 0)), fs.orderBy("_s"))   // 5 dk geri: geç görünen yazmaları kaçırmamak için
+      : fs.query(Cloud.col, fs.orderBy("_s"));
+    Cloud.pulled = false;
+    Cloud.unsub = fs.onSnapshot(q, { includeMetadataChanges: true }, Cloud.onSnap, Cloud.onSnapErr);
+  },
+  onSnap(snap) {
+    let top = null, changed = false;
+    snap.docChanges({ includeMetadataChanges: true }).forEach((ch) => {
+      if (ch.type === "removed" || ch.doc.metadata.hasPendingWrites) return;
+      try {
+        const r = ch.doc.data(), s = r._s;
+        delete r._s;
+        if (s && typeof s.seconds === "number" && (!top || s.seconds > top.s || (s.seconds === top.s && s.nanoseconds > top.n))) top = { s: s.seconds, n: s.nanoseconds };
+        if (validItem(r) && Cloud.merge(r)) changed = true;
+      } catch (e) { console.warn("[centik] belge atlandı", ch.doc.id, e); }   // bozuk tek belge diğerlerini durdurmaz
+    });
+    if (!snap.metadata.fromCache) {
+      if (top) { const cur = KV.obj("cursor"); if (!cur || !(cur.s >= 0) || top.s > cur.s || (top.s === cur.s && top.n > cur.n)) KV.set("cursor", top); }
+      Cloud.rErr = null; Cloud.sum();                     // yalnızca okuma hatası kalkar; yazma hatasını gönderim kaldırır
+      if (!Cloud.pulled) { Cloud.pulled = true; Cal.kick({}); }
+      Cloud.flush();
+    }
+    if (changed) { Cal.soon(); invalidate(); }
+    refresh();
+  },
+  onSnapErr(e) {
+    Cloud.rErr = Cloud.errOf(e); Cloud.sum();
+    console.warn("[centik] sync", e);
+    Cloud.unsub = null; Cloud.pulled = false;              // dinleyici yokken bulutun son hâli bilinmiyor sayılır
+    clearTimeout(Cloud.listenT);
+    Cloud.listenT = setTimeout(() => { if (Cloud.user && Cloud.col && !Cloud.unsub) Cloud.listen(); }, 60000);
+    refresh();
+  },
+  errOf(e) {
+    const code = (e && e.code) || "";
+    const kind = code === "permission-denied" ? "rules" : code === "resource-exhausted" ? "quota" : "other";
+    return { kind, msg: kind === "rules" ? t("e_rules") : kind === "quota" ? t("e_quota") : t("e_generic", { msg: (e && e.message) || code }) };
+  },
+  sum() { const x = Cloud.rErr || Cloud.wErr; Cloud.err = x ? x.kind : ""; Cloud.errMsg = x ? x.msg : ""; },
+  /* merge: buluttan gelen kaydı yerelle karşılaştırır. true dönerse yerel veri değişti. */
+  merge(r) {
+    norm(r);                                              // karşılaştırmadan önce: bozuk damga ya da alan yerel sürümü yanıltmasın
+    const l = S.items.get(keyOf(r));
+    if (!l) { Cloud.apply(r, null); return true; }
+    const c = cmpVer(r, l);
+    if (c > 0) { Cloud.apply(r, l); return true; }
+    if (c < 0) { if (!l._d) { l._d = 1; persist(l); } return false; }   // yerel daha yeni: tekrar gönderilecek
+    if (l._d) { l._d = 0; persist(l); }                                 // aynı sürüm bulutta: temiz
+    return false;
+  },
+  apply(r, l) {
+    r._d = 0; index(r); persist(r);
+    if (r.k === "m" && r.id === "calendar" && l && !l.del && l.calId && l.calId !== (r.del ? "" : r.calId)) Cal.replaced(l.calId);
+    if (r.k === "n" && Ed.n && Ed.n.id === r.id) Ed.remote(r);
+  },
+  kick() {
+    clearTimeout(Cloud.kickT);
+    Cloud.kickT = setTimeout(Cloud.flush, 1200);
+  },
+  dirty() { const a = []; for (const it of S.items.values()) if (it._d) a.push(it); return a; },
+  sent(p) { const cur = S.items.get(p.key); if (cur && cur._d && cur.u === p.u && cur.by === p.by) { cur._d = 0; persist(cur); } },
+  later() { if (!Cloud.flushT) Cloud.flushT = setTimeout(() => { Cloud.flushT = 0; Cloud.flush(true); }, 60000); },
+  settle() {                                              // gönderilemeyen (reddedilen) kayıt kaldıkça hata görünür kalır
+    const bad = Cloud.dirty().filter((it) => it._bad).length;
+    Cloud.wErr = bad ? { kind: "item", msg: tn("e_item", bad) } : null; Cloud.sum();
+  },
+  /* flush: bekleyen kayıtları gönderir. force: bekleme süresini (hold) yok sayar ("Tekrar dene", bağlantı geldi). */
+  async flush(force) {
+    if (!Cloud.col || !Cloud.pulled) return;
+    if (force !== true && (!navigator.onLine || Date.now() < Cloud.hold)) {   // çevrimdışı ya da az önce başarısız oldu: bekle
+      Cloud.later();                                      // bağlantı gelince ("online") hemen, gelmezse dakikada bir yine de denenir
+      return;                                             // (tarayıcının "çevrimdışı" demesi her ortamda güvenilir değildir)
+    }
+    if (Cloud.flushing) { Cloud.again = true; return; }
+    const todo = Cloud.dirty().filter((it) => !it._bad);
+    if (!todo.length) { Cloud.settle(); refresh(); return; }
+    Cloud.flushing = true; Cloud.hold = 0; clearTimeout(Cloud.flushT); Cloud.flushT = 0;
+    const fs = Cloud.fb.fs, db = Cloud.fb.db, col = Cloud.col, gen = Cloud.gen;
+    const refused = (e) => ["invalid-argument", "out-of-range"].includes((e && e.code) || "");   // kaydın kendisi reddedildi (ör. çok büyük)
+    const passing = (e) => ["unavailable", "deadline-exceeded", "aborted", "failed-precondition", "cancelled"].includes((e && e.code) || "");   // bağlantı ya da çekişme: geçici
+    const limit = (pr) => Promise.race([pr, sleep(45000).then(() => { throw Object.assign(new Error("timeout"), { code: "deadline-exceeded" }); })]);
+    /* send: tek işlemde okur, karşılaştırır, yalnızca bizimki yeniyse yazar. Sonuç: null = yazıldı,
+       { c: 0 } = sunucuda aynı sürüm var, { c: <0, cur } = sunucudaki daha yeni. İşlem SDK tarafından yinelenebilir. */
+    const send = (part) => fs.runTransaction(db, async (tx) => {
+      const snaps = await Promise.all(part.map((p) => tx.get(p.ref)));
+      return snaps.map((sn, i) => {
+        const p = part[i];
+        let cur = null;
+        if (sn.exists()) { try { cur = sn.data(); delete cur._s; cur = validItem(cur) ? norm(cur) : null; } catch (e) { cur = null; } }
+        const c = cur ? cmpVer(p, cur) : 1;
+        if (c > 0) { tx.set(p.ref, p.data); return null; }
+        return { c, cur };
+      });
+    });
+    let changed = false;
+    const take = (part, res) => res.forEach((r, i) => { if (!r || r.c === 0) Cloud.sent(part[i]); else if (Cloud.merge(r.cur)) changed = true; });
+    try {
+      for (let i = 0; i < todo.length; i += 40) {
+        const part = todo.slice(i, i + 40).map((it) => ({ key: keyOf(it), it, u: it.u, by: it.by, ref: fs.doc(col, it.k + "_" + it.id), data: Object.assign(publicCopy(it), { _s: fs.serverTimestamp() }) }));
+        try {
+          const res = await limit(send(part));
+          if (gen !== Cloud.gen) return;                  // bu arada çıkış yapıldı ya da hesap değişti
+          take(part, res);
+        } catch (e) {
+          if (gen !== Cloud.gen) return;
+          if (!refused(e)) throw e;                       // kurallar, kota, ağ: hepsini etkiler, aşağıda ele alınır
+          for (const p of part) {                         // toplu yazma reddedildi: sorunlu kayıt tek tek denenerek ayrılır, diğerleri gider
+            try { const res = await limit(send([p])); if (gen !== Cloud.gen) return; take([p], res); }
+            catch (e2) { if (gen !== Cloud.gen) return; if (!refused(e2)) throw e2; p.it._bad = 1; console.warn("[centik] kayıt gönderilemedi", p.key, e2); }
+          }
+        }
+      }
+      Cloud.settle();
+    } catch (e) {
+      if (gen !== Cloud.gen) return;
+      Cloud.wErr = passing(e) ? null : Cloud.errOf(e); Cloud.sum();   // geçici hata şerit çıkarmaz; bekleyenler ayarlarda görünür
+      if (!passing(e)) console.warn("[centik] sync", e);
+      Cloud.hold = Date.now() + 60000;                    // art arda denemesin: bir dakika sonra, ya da bağlantı gelince
+      Cloud.later();
+    } finally {
+      if (gen === Cloud.gen) {
+        Cloud.flushing = false;
+        if (changed) { Cal.soon(); invalidate(); }
+        if (Cloud.again) { Cloud.again = false; Cloud.flush(); }
+      }
+      refresh();
+    }
+  }
+};
+function authMsg(e) {
+  const c = (e && e.code) || "";
+  if (c === "auth/popup-blocked") return t("e_popup_blocked");
+  if (c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request" || c === "auth/user-cancelled") return t("e_popup_closed");
+  if (c === "auth/unauthorized-domain") return t("e_domain", { host: location.hostname });
+  if (c === "auth/operation-not-allowed") return t("e_provider");
+  if (c === "auth/network-request-failed") return t("e_network");
+  if (c === "auth/user-mismatch") return t("e_mismatch");
+  if (c === "auth/operation-not-supported-in-this-environment" || c === "auth/web-storage-unsupported") return t("e_env");
+  return t("e_generic", { msg: (e && e.message) || c });
+}
+
+/* ========================== 7 · Google Takvim ========================== */
+/* Tek yön: not → Takvim. Uygulama kendi açtığı ayrı takvime yazar (izin: yalnızca uygulamanın oluşturduğu takvimler).
+   - Etkinlik kimliği notun kimliğidir; aynı notu iki cihaz gönderse de tek etkinlik oluşur.
+   - Her not için "takvimde ne olmalı" hesaplanır ve özeti (h) çıkarılır. Takvimdeki özet farklıysa gönderilir.
+   - "Takvimde ne var" bilgisi not başına bir kayıttır (k:"c") ve hangi takvimi anlattığını da taşır (cal). Takvim
+     değişirse (başka cihazınki geçerli oldu, silindi, yenisi açıldı) eski kayıtlar kendiliğinden geçersiz sayılır.
+   - Özet etkinliğin içine de yazılır; "baştan eşitle" takvimi okuyup gerçek durumla karşılaştırır.
+   - Erişim belirteci yalnızca bellekte durur, yaklaşık bir saat geçerlidir. Süresi dolunca yenisi ancak
+     bir dokunuşla (açılır pencere) alınabilir; o yüzden bekleyenler üstte şerit olarak görünür. */
+class CalError extends Error { constructor(kind, msg) { super(msg || kind); this.kind = kind; } }
+const CAL_NONE = Object.freeze({ kind: "none" });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const Cal = {
+  token: "", exp: 0, busy: false, again: null, err: "", errMsg: "", progress: "", soonT: 0, memo: new WeakMap(),
+
+  enabled() { const m = S.meta.get("calendar"); return !m || m.del || m.on !== false; },
+  active() { return !!Cloud.user && !!Cloud.col && Cal.enabled(); },   // col: hesap kabul edildikten sonra (hesap sorusu sürerken takvime dokunulmaz)
+  calId() { const m = S.meta.get("calendar"); return (m && !m.del && m.calId) || ""; },
+  /* rec: bu not için ŞİMDİKİ takvimi anlatan kayıt (yoksa null). Başka takvimin kaydı yok sayılır. */
+  rec(id) { const r = S.cal.get(id), c = Cal.calId(); return r && !r.del && c && r.cal === c ? r : null; },
+  /* chores: silinmeyi bekleyen eski takvim var mı (içindeki etkinlikler çalmaya devam eder) */
+  chores() { const c = Cal.calId(); return KV.arr("calOrphans").some((id) => id !== c); },
+  tokenOk() { return !!Cal.token && Date.now() < Cal.exp; },
+  dropToken() { Cal.token = ""; Cal.exp = 0; },
+  takeToken(res) {
+    let cred = null;
+    try { cred = Cloud.fb.au.GoogleAuthProvider.credentialFromResult(res); } catch (e) {}
+    if (!cred || !cred.accessToken) return;
+    Cal.token = cred.accessToken; Cal.exp = Date.now() + 50 * 60000;
+    if (Cal.err === "scope") { Cal.err = ""; Cal.errMsg = ""; }
+    Cal.verify().then(() => Cal.kick({}));
+  },
+  async verify() {                                       // belirtecin süresini ve takvim iznini Google'a sorar
+    const tok = Cal.token;
+    try {
+      const r = await fetch(TOKENINFO, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "access_token=" + encodeURIComponent(tok) });
+      if (!r.ok || tok !== Cal.token) return;
+      const j = await r.json();
+      if (j.expires_in) Cal.exp = Date.now() + Math.max(0, Number(j.expires_in) - 120) * 1000;
+      if (typeof j.scope === "string" && !j.scope.split(" ").includes(CAL_SCOPE)) { Cal.dropToken(); Cal.err = "scope"; Cal.errMsg = t("e_cal_scope"); }
+    } catch (e) {}
+  },
+
+  /* ---- takvimde ne olmalı ---- */
+  /* want: kayıtlı notlar için sonuç saklanır (not değişince yeniden hesaplanır); düzenleyicideki taslak her seferinde hesaplanır. */
+  want(n, now) {
+    if (n.del || !n.due || !isYmd(n.due.d)) return CAL_NONE;
+    const timed = isHm(n.due.t);
+    if (n.st === "done") {
+      const end = timed ? dueAt(n) : parseYmd(addDays(n.due.d, 1)).getTime();
+      if (end > (now || Date.now())) return CAL_NONE;     // vakti gelmeden bitti: etkinlik kalkar, alarm çalmaz
+      const rec = Cal.rec(n.id);
+      if (!rec || rec.h === "none") return CAL_NONE;       // takvimde yoksa geçmişe etkinlik eklenmez
+    }                                                     // geçmişte bitti ve takvimde duruyor: notun son hâliyle, tekrarsız kalır
+    const stored = S.notes.get(n.id) === n, hit = stored ? Cal.memo.get(n) : null;
+    if (hit && hit.u === n.u && hit.by === n.by) return hit.w;
+    const w = Cal.build(n, timed);
+    if (stored) Cal.memo.set(n, { u: n.u, by: n.by, w });
+    return w;
+  },
+  build(n, timed) {
+    const ev = { summary: calTitle(n), description: String(n.body || "").slice(0, 4000), transparency: "transparent", status: "confirmed" };
+    if (timed) {
+      const tz = n.tz || DEV_TZ, e = wallAdd(n.due.d, n.due.t, EVENT_MIN);
+      ev.start = { dateTime: n.due.d + "T" + n.due.t + ":00", timeZone: tz };
+      ev.end = { dateTime: e.d + "T" + e.t + ":00", timeZone: tz };
+    } else {
+      ev.start = { date: n.due.d };
+      ev.end = { date: addDays(n.due.d, 1) };
+    }
+    const rems = timed ? cleanRems(n.rem) : [];
+    ev.reminders = { useDefault: false, overrides: rems.map((m) => ({ method: "popup", minutes: m })) };
+    if (RRULE[n.rep] && n.st !== "done") ev.recurrence = [RRULE[n.rep]];   // biten notun serisi sürmez
+    const crit = hash(JSON.stringify([ev.summary, ev.start, ev.end, ev.recurrence || 0, rems]));
+    return { kind: "event", ev, crit, h: hash(crit + "\n" + ev.description) };
+  },
+  body(n, w) {                                           // gönderilen etkinlik: özet ve uygulamaya dönüş bağlantısı eklenir
+    const ev = clone(w.ev);
+    if (/^https?:$/.test(location.protocol)) {
+      const url = location.origin + location.pathname + "#n=" + n.id;
+      ev.source = { title: APP.name, url };
+      ev.description = (ev.description ? ev.description + "\n\n" : "") + APP.name + ": " + url;
+    }
+    ev.extendedProperties = { private: { centik: "1", h: w.h } };
+    return ev;
+  },
+  /* diff: takvim bu nota göre nerede?  "" aynı · "soft" yalnızca açıklama farklı · "crit" alarmı etkileyen fark.
+     Bekleyenler, satırdaki zil ve "takvimde mi" sorusu hep buradan okunur; ayrı ayrı hesaplanıp birbirinden sapmaz. */
+  diff(n, now) {
+    const w = Cal.want(n, now), rec = Cal.rec(n.id);
+    if (rec && rec.v > CAL_V) return "";                  // kaydı daha yeni bir uygulama sürümü yazmış: eski sürüm onunla çekişmez
+    const have = rec ? rec.h : "none";
+    if (w.kind === "none") return have === "none" ? "" : "crit";
+    if (have === w.h) return "";
+    return have !== "none" && rec.crit === w.crit ? "soft" : "crit";
+  },
+  /* not için arayüz durumu: "" (tarih yok) | off | ok | wait */
+  state(n) { return !n.due ? "" : !Cal.active() ? "off" : Cal.diff(n) === "crit" ? "wait" : "ok"; },
+  covers(n) {                                            // bu notun alarmı takvimde aynen duruyor mu
+    return Cal.active() && Cal.want(n).kind === "event" && Cal.diff(n) !== "crit";
+  },
+  pending() {                                            // crit: alarmı etkileyen fark · soft: yalnızca açıklama farkı
+    const crit = [], soft = [];
+    if (!Cal.active()) return { crit, soft };
+    const now = Date.now();
+    for (const n of S.notes.values()) { const d = Cal.diff(n, now); if (d) (d === "crit" ? crit : soft).push(n); }
+    return { crit, soft };
+  },
+
+  /* ---- gönderme ---- */
+  /* soon: başka cihazdan gelen değişiklik için. Değişikliği yapan cihaz Takvim'e kendisi gönderir ve sonucu
+     eşitler; ona zaman tanınır. Hâlâ bekliyorsa (o cihazın oturumu yoksa) bu cihaz gönderir. */
+  soon() { clearTimeout(Cal.soonT); Cal.soonT = setTimeout(() => Cal.kick({}), 8000); },
+  /* kick: bekleyenleri gönderir. opts.gesture: bir dokunuşun içinden çağrıldı, gerekirse giriş penceresi açılabilir.
+     opts.full: önce takvimi okuyup gerçek durumla karşılaştırır. */
+  kick(opts) {
+    opts = opts || {};
+    if (Cal.busy) { Cal.again = { full: !!(opts.full || (Cal.again && Cal.again.full)) }; return Promise.resolve(); }
+    if (!Cal.active()) { refresh(); return Promise.resolve(); }
+    if (!navigator.onLine) { if (opts.explicit) toast(t("e_offline")); refresh(); return Promise.resolve(); }
+    const p = Cal.pending(), urgent = p.crit.length > 0 || !!opts.full || !!opts.consent || Cal.chores();   // eski takvimi silmek de iştir
+    if (!urgent && !p.soft.length) { refresh(); return Promise.resolve(); }
+    let auth = null;
+    if (!Cal.tokenOk() || opts.consent) {
+      if (!opts.gesture || !urgent) { refresh(); return Promise.resolve(); }
+      try { auth = Cloud.reauth(!!opts.consent); } catch (e) { auth = Promise.reject(e); }   // beklemeden: pencere dokunuşla açılmalı
+    }
+    Cal.busy = true; Cal.progress = ""; refresh();
+    return Cal.run(opts, auth);
+  },
+  async run(opts, auth) {
+    let sent = 0, failed = 0, firstErr = "";
+    try {
+      if (auth) {
+        try { await Promise.race([auth, sleep(120000).then(() => { throw new CalError("auth", t("e_cal_auth")); })]); }   // pencere açık unutulursa kilitlenmesin
+        catch (e) { throw e instanceof CalError ? e : new CalError("auth", authMsg(e)); }
+        await Cal.verify();
+        if (!Cal.tokenOk()) throw new CalError(Cal.err === "scope" ? "scope" : "auth", Cal.errMsg || t("e_popup_closed"));
+      }
+      for (let round = 0; round < 2; round++) {
+        try {
+          await Cal.ensure();                             // takvim yoksa önce açılır
+          if (opts.full || Date.now() - KV.num("calRecon") > 864e5) await Cal.reconcile();
+          const p = Cal.pending(), all = p.crit.concat(p.soft);
+          failed = 0; firstErr = "";
+          for (let i = 0; i < all.length; i++) {
+            Cal.progress = (i + 1) + " / " + all.length; refresh();
+            try { if (await Cal.push(all[i])) sent++; }
+            catch (e) {                                   // Takvim yalnızca bu notu reddetti: sayılır, diğerleri gönderilmeye devam eder
+              if (!(e instanceof CalError) || e.kind !== "item") throw e;
+              failed++; firstErr = firstErr || e.message;
+            }
+          }
+          if (!failed) await Cal.orphans();               // eski takvim, hatırlatmalar yenisine yazıldıktan SONRA silinir (arada alarmsız kalınmasın)
+          break;
+        } catch (e) {
+          if (!(e instanceof CalError) || e.kind !== "gone" || round) throw e;
+          const m = S.meta.get("calendar");               // takvim dışarıdan silinmiş: yenisi açılır; eski kayıtlar o takvimi anlattığı için her şey baştan gönderilir
+          commit({ k: "m", id: "calendar", calId: "", on: !m || m.on !== false, c: Date.now() });
+        }
+      }
+      if (failed) throw new CalError("some", tn("e_cal_some", failed) + " " + firstErr);
+      Cal.err = ""; Cal.errMsg = "";
+      if (opts.gesture && sent) toastQuiet(sent === 1 ? t("t_sent") : t("t_sent_n", { n: sent }));
+    } catch (e) {
+      const kind = e instanceof CalError ? e.kind : "other";
+      const msg = kind === "api" ? t("e_cal_api") : kind === "scope" ? t("e_cal_scope") : kind === "rate" ? t("e_cal_rate") : kind === "some" ? e.message
+        : kind === "wait" ? t("e_cal_wait_sync") : kind === "net" ? t("e_network") : kind === "auth" ? (e.message || t("e_cal_auth"))
+        : t("e_generic", { msg: (e && e.message) || String(e) });
+      if (kind === "auth" || kind === "net" || kind === "wait") {      // geçici: bekleyenler şeritte kalır, hata sayılmaz
+        if (opts.explicit) toast(msg);                                  // yalnızca "Gönder" gibi açık bir istekte söylenir
+      } else { Cal.err = kind; Cal.errMsg = msg; console.warn("[centik] calendar", e); }
+    } finally {
+      Cal.busy = false; Cal.progress = "";
+      const again = Cal.again; Cal.again = null;
+      refresh(); invalidate();
+      if (again && (!Cal.err || Cal.err === "some")) Cal.kick(again);   // tek notun reddi, bu arada gelen başka değişikliği bekletmez
+    }
+  },
+  async fetch(method, path, body, attempt) {
+    attempt = attempt || 0;
+    let res;
+    try {
+      res = await fetch(CAL_API + path, { method, headers: Object.assign({ Authorization: "Bearer " + Cal.token }, body ? { "Content-Type": "application/json" } : {}), body: body ? JSON.stringify(body) : undefined });
+    } catch (e) { throw new CalError("net", (e && e.message) || "network"); }
+    if (res.status === 204) return { ok: true, status: 204, data: null };
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (res.ok) return { ok: true, status: res.status, data };
+    const er = (data && data.error) || {}, reason = (er.errors && er.errors[0] && er.errors[0].reason) || "", msg = er.message || ("HTTP " + res.status);
+    if (res.status === 401) { Cal.dropToken(); throw new CalError("auth", t("e_cal_auth")); }
+    if (res.status === 429 || res.status >= 500 || (res.status === 403 && /ratelimitexceeded/i.test(reason))) {
+      if (attempt < 3) { await sleep(500 * Math.pow(2, attempt) + Math.random() * 300); return Cal.fetch(method, path, body, attempt + 1); }
+      throw new CalError("rate", msg);
+    }
+    if (res.status === 403) {
+      if (reason === "accessNotConfigured" || /has not been used|is disabled/i.test(msg)) throw new CalError("api", msg);
+      if (reason === "insufficientPermissions" || /insufficient/i.test(msg)) throw new CalError("scope", msg);
+    }
+    return { ok: false, status: res.status, data, reason, msg };
+  },
+  async ensure() {                                       // uygulamanın takvimi; yoksa açar
+    const id = Cal.calId();
+    if (id) return id;
+    if (!Cloud.pulled) throw new CalError("wait");        // başka cihaz açmış olabilir: önce eşitleme tamamlanmalı
+    const m = S.meta.get("calendar");
+    const r = await Cal.fetch("POST", "/calendars", { summary: APP.name, description: t("cal_desc"), timeZone: DEV_TZ });
+    if (!r.ok || !r.data || typeof r.data.id !== "string" || !r.data.id) throw new CalError("other", r.msg);
+    commit({ k: "m", id: "calendar", calId: r.data.id, on: !m || m.del || m.on !== false, c: Date.now() });
+    return r.data.id;
+  },
+  async push(n) {                                        // true: etkinlik yazıldı · false: kaldırıldı ya da dokunulmadı
+    const calId = await Cal.ensure(), base = "/calendars/" + encodeURIComponent(calId) + "/events";
+    const w = Cal.want(n), rec = Cal.rec(n.id), known = !!rec && rec.h !== "none";
+    let eid = (rec && EID_RE.test(rec.eid || "") && rec.eid) || n.id;
+    const one = () => base + "/" + encodeURIComponent(eid);
+    if (w.kind === "none") {
+      const r = await Cal.fetch("DELETE", one());
+      if (!r.ok && r.status !== 404 && r.status !== 410) throw new CalError("item", r.msg);
+      commit({ k: "c", id: n.id, eid, h: "none", crit: "none", v: CAL_V, cal: calId });
+      return false;
+    }
+    const body = Cal.body(n, w), withId = () => Object.assign({ id: eid }, body);
+    let r = known ? await Cal.fetch("PUT", one(), body) : await Cal.fetch("POST", base, withId());
+    if (known && (r.status === 404 || r.status === 410)) r = await Cal.fetch("POST", base, withId());
+    if (r.status === 409) {                               // bu kimlik takvimde var (belki silinmiş): üstüne yazıp geri getir
+      r = await Cal.fetch("PUT", one(), body);
+      if (!r.ok && [403, 404, 410].includes(r.status)) { eid = n.id + "r" + newId().slice(0, 8); r = await Cal.fetch("POST", base, withId()); }
+    }
+    if (r.status === 404) throw new CalError("gone", r.msg);
+    if (!r.ok) throw new CalError("item", r.msg);         // Takvim bu etkinliği kabul etmedi (yalnızca bu not)
+    commit({ k: "c", id: n.id, eid, h: w.h, crit: w.crit, v: CAL_V, cal: calId });
+    return true;                                          // etkinlik yazıldı (kaldırma değil)
+  },
+  async reconcile() {                                    // takvimi okur, her notun kaydını gerçek duruma çeker
+    const calId = await Cal.ensure(), actual = new Map();
+    let page = "";
+    do {
+      const r = await Cal.fetch("GET", "/calendars/" + encodeURIComponent(calId) + "/events?showDeleted=true&maxResults=2500&fields=" +
+        encodeURIComponent("nextPageToken,items(id,status,extendedProperties/private)") + (page ? "&pageToken=" + encodeURIComponent(page) : ""));
+      if (r.status === 404) throw new CalError("gone", r.msg);
+      if (!r.ok) throw new CalError("other", r.msg);
+      for (const e of (r.data && r.data.items) || []) {
+        const pr = (e.extendedProperties && e.extendedProperties.private) || {};
+        actual.set(e.id, e.status === "cancelled" ? "none" : (pr.h || "?"));
+      }
+      page = (r.data && r.data.nextPageToken) || "";
+    } while (page);
+    const now = Date.now();
+    for (const n of [...S.notes.values()]) {
+      const rec = Cal.rec(n.id), eid = (rec && EID_RE.test(rec.eid || "") && rec.eid) || n.id, h = actual.get(eid) || "none";
+      if (rec && rec.v > CAL_V) continue;                  // daha yeni sürümün kaydına dokunulmaz
+      const w = Cal.want(n, now), crit = h === "none" ? "none" : (w.kind === "event" && w.h === h ? w.crit : "?");
+      if (rec ? (rec.h !== h || rec.crit !== crit) : h !== "none") commit({ k: "c", id: n.id, eid, h, crit, v: CAL_V, cal: calId });
+    }
+    KV.set("calRecon", now);
+  },
+  replaced(oldCalId) {                                   // takvim değişti: eskisi fazlalık, silinene dek içindeki etkinlikler çalar
+    const list = KV.arr("calOrphans");
+    if (!list.includes(oldCalId)) KV.set("calOrphans", list.concat(oldCalId));
+    KV.set("calRecon", 0);                                // yeni takvimde ne olduğunu bir kez oku (başka cihaz doldurmuş olabilir)
+    Cal.soon();
+  },
+  async orphans() {
+    const list = KV.arr("calOrphans");
+    if (!list.length) return;
+    const left = [];
+    for (const id of list) {
+      if (id === Cal.calId()) continue;
+      const r = await Cal.fetch("DELETE", "/calendars/" + encodeURIComponent(id));
+      if (!r.ok && r.status !== 404 && r.status !== 410) left.push(id);
+    }
+    KV.set("calOrphans", left);
+  },
+  setEnabled(on) {
+    if (!Cloud.pulled) return;                            // ilk eşitlemeden önce yazılırsa diğer cihazın takvim kimliğini ezer
+    const m = S.meta.get("calendar");
+    commit({ k: "m", id: "calendar", calId: (m && !m.del && m.calId) || "", on: !!on, c: (m && m.c) || Date.now() });
+  },
+  test() {                                               // uçtan uca deneme: 3 dakika sonrasına gerçek bir not
+    const x = new Date(Date.now() + 3 * 60000 + 59000);
+    const n = blankNote({ title: t("s4_test_title"), body: t("s4_test_body"), due: { d: ymd(x), t: pad(x.getHours()) + ":" + pad(x.getMinutes()) }, rem: [0] });
+    commit(n);
+    return Cal.kick({ gesture: true, explicit: true }).then(() => Cal.covers(n));
+  }
+};
+function calTitle(n) {
+  const s = String(n.title || "").trim() || String(n.body || "").trim().split("\n")[0] || "…";
+  return s.slice(0, 300);
+}
+function cleanRems(list) {
+  const out = [];
+  for (const m of Array.isArray(list) ? list : []) if (Number.isInteger(m) && m >= 0 && m <= REM_LIMIT && !out.includes(m)) out.push(m);
+  return out.sort((a, b) => a - b).slice(0, REM_MAX);
+}
+
+/* ======================= 8 · uygulama içi alarm ======================= */
+/* Uygulama açıkken vakti gelen hatırlatmayı ekranda gösterir. Takvim'de aynı alarm duruyorsa sistem bildirimi
+   atmaz (telefon zaten Takvim'den bildirir); durmuyorsa ve izin varsa sistem bildirimi de gösterir. */
+const Alarm = {
+  timer: 0, GRACE: 15 * 60000,
+  start() { clearInterval(Alarm.timer); Alarm.timer = setInterval(Alarm.tick, 20000); Alarm.tick(); },
+  /* occ: m dakika önceki hatırlatması en son ne zaman çalması gereken tekrarın anı. Tekrarlı not işaretlenmedikçe
+     kayıtlı tarihi eskide kalır; Takvim'deki seri ise her tekrarda çalar. Uygulama içi alarm da öyle davranır. */
+  occ(n, m, now) {
+    let at = dueAt(n);
+    if (!n.rep || at - m * 60000 >= now - Alarm.GRACE) return at;
+    const tz = n.tz || DEV_TZ, back = addDays(today(), -2);
+    let d = n.due.d;
+    if (d < back) {                                        // çok eskide kalmış seri: bugüne yakın bir tekrara atla
+      if (n.rep === "daily") d = back;
+      else if (n.rep === "weekly") d = addDays(d, Math.floor(dayDiff(back, d) / 7) * 7);
+      else if (n.rep === "weekdays") { d = back; while ([0, 6].includes(parseYmd(d).getDay())) d = addDays(d, 1); }
+      at = zonedToUtc(d, n.due.t, tz);
+    }
+    for (let i = 0; i < 400; i++) {
+      const nx = stepDate(d, n.rep);
+      if (nx === d) break;
+      const t2 = zonedToUtc(nx, n.due.t, tz);
+      if (t2 - m * 60000 > now) break;
+      d = nx; at = t2;
+    }
+    return at;
+  },
+  tick() {
+    const now = Date.now(), fired = KV.obj("fired") || {};
+    let dirty = false;
+    for (const k in fired) if (!(now - fired[k] <= 2 * 864e5)) { delete fired[k]; dirty = true; }
+    for (const n of S.notes.values()) {
+      if (n.del || n.st === "done" || !n.due || !isHm(n.due.t)) continue;
+      let hit = 0;
+      for (const m of cleanRems(n.rem)) {
+        const at = Alarm.occ(n, m, now), fire = at - m * 60000;
+        if (fire > now || now - fire > Alarm.GRACE) continue;
+        const key = n.id + "|" + at + "|" + m;
+        if (fired[key]) continue;
+        fired[key] = now; dirty = true; hit = at;
+      }
+      if (hit) Alarm.ring(n, hit);                        // aynı anda vakti gelen birden çok hatırlatma tek kez çalar
+    }
+    if (dirty) KV.set("fired", fired);
+  },
+  when(at) {                                             // çalan tekrarın cihaz saatiyle günü ve saati
+    const x = new Date(at), d = ymd(x);
+    return { d, t: pad(x.getHours()) + ":" + pad(x.getMinutes()), day: d === today() ? "" : relDay(d) };
+  },
+  ring(n, at) {
+    UI.rings = UI.rings.filter((r) => r.id !== n.id).concat({ id: n.id, at }).slice(-3);
+    invalidate();
+    const w = Alarm.when(at), line = w.t + " · " + calTitle(n) + (w.day ? " (" + w.day + ")" : "");
+    try { if (navigator.vibrate) navigator.vibrate([180, 90, 180]); } catch (e) {}
+    if (topSheet()) toast(line, null, null, 8000);        // bir sayfa açıkken kart arkada kalır: önde de haber ver
+    if (Cal.covers(n) || !("Notification" in window) || Notification.permission !== "granted") return;
+    const title = calTitle(n), opts = { body: (w.day ? w.day + " " : "") + w.t, tag: NS + "-" + n.id, renotify: true, icon: "./icon-192.png", data: { id: n.id } };
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then((reg) => reg.showNotification(title, opts)).catch(() => {});
+      else new Notification(title, opts);
+    } catch (e) {}
+  },
+  dismiss(id) { UI.rings = UI.rings.filter((r) => r.id !== id); invalidate(); },
+  async ask() {
+    if (!("Notification" in window)) return;
+    try { await Notification.requestPermission(); } catch (e) {}
+    refresh();
+  }
+};
+
+/* ---- yedek ---- */
+const Backup = {
+  export() {
+    const items = [];
+    for (const it of S.items.values()) if (!it.del && it.k !== "c" && it.k !== "m") items.push(publicCopy(it));
+    const blob = new Blob([JSON.stringify({ app: NS, v: 1, at: new Date().toISOString(), items }, null, 1)], { type: "application/json" });
+    const a = h("a", { href: URL.createObjectURL(blob), download: NS + "-yedek-" + today() + ".json" });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  },
+  /* yükleme: eksik ve silinmiş kayıtlar geri gelir; yerelde aynı ya da daha yeni olan kayda dokunulmaz.
+     Bu cihazda olmayan ya da eski kalmış kayıt, yedekteki sürüm damgasıyla girer: bulutta daha yenisi (ya da
+     silinmişi) varsa eşitlemede o kazanır. Yalnızca bu cihazda silinmiş olan, bilerek geri getirildiği için
+     yeni sürüm olarak yazılır. */
+  import(text) {
+    let data;
+    try { data = JSON.parse(text); } catch (e) { return -1; }
+    if (!data || data.app !== NS || !Array.isArray(data.items)) return -1;
+    let count = 0;
+    for (const raw of data.items) {
+      try {
+        if (!validItem(raw) || !["n", "t", "g"].includes(raw.k) || raw.del) continue;
+        const it = sanitize(raw), cur = S.items.get(keyOf(it));
+        if (cur && !cur.del && cmpVer(cur, it) >= 0) continue;
+        if (cur && cur.del) commit(it);
+        else { it._d = 1; index(it); persist(it); }
+        count++;
+      } catch (e) { console.warn("[centik] yedekteki kayıt atlandı", e); }
+    }
+    if (count) { Cloud.kick(); invalidate(); }
+    Cal.kick({});
+    return count;
+  }
+};
+/* dışarıdan gelen kaydı (yedek): yalnızca bilinen alanlar alınır, biçimi norm() düzeltir */
+const FIELDS = { n: ["title", "body", "st", "tags", "cl", "pin", "due", "tz", "rem", "rep", "c"], t: ["name", "g", "o"], g: ["name", "hue", "o"] };
+function sanitize(raw) {
+  const o = { k: raw.k, id: raw.id, u: raw.u, by: raw.by };
+  for (const f of FIELDS[raw.k]) if (raw[f] !== undefined) o[f] = raw[f];
+  return norm(clone(o));
+}
+
+/* ============================== 9 · arayüz ============================== */
+let rafMain = 0, rafChrome = 0, toastT = 0, bannerKey = "", ringKey = "", persistAsked = false;
+function invalidate() { if (!rafMain) rafMain = requestAnimationFrame(() => { rafMain = 0; render(); }); }   // liste + üst bölüm
+function refresh() { if (!rafChrome) rafChrome = requestAnimationFrame(() => { rafChrome = 0; renderChrome(); }); }   // yalnızca şeritler, noktalar, ayarlar
+function tn(key, n) { return t(n === 1 && (key + "_1") in (I18N[lang] || {}) ? key + "_1" : key, { n }); }
+function note(kind, text, iconName) { return h("p", { class: "note" + (kind ? " " + kind : "") }, icon(iconName || (kind === "bad" ? "alert" : "info")), h("span", { text })); }
+/* grow: metin alanını içeriğine göre uzatır. Kaydırma konumu korunur; yoksa uzun notta her tuşta sayfa zıplar. */
+function grow(el) {
+  const sc = el.closest(".sheet-b"), y = sc ? sc.scrollTop : 0;
+  el.style.height = "auto"; el.style.height = el.scrollHeight + "px";
+  if (sc && sc.scrollTop !== y) sc.scrollTop = y;
+}
+function saveUi() { KV.set("ui", { tab: UI.tab, status: UI.status, tagSel: [...UI.tagSel], groupBy: UI.groupBy, hintOff: UI.hintOff }); }
+const filtering = () => UI.tagSel.size > 0 || UI.qf.length > 0;
+function clearFilters() { UI.tagSel.clear(); UI.q = ""; UI.qf = []; UI.status = "active"; UI.limit = PAGE; const q = $("#q"); if (q) q.value = ""; saveUi(); invalidate(); }
+
+/* ---- odak: yeniden çizilen bölümde klavye odağı aynı denetime geri verilir (data-fk anahtarıyla) ---- */
+function focusKey(root) { const a = document.activeElement; return a && a !== document.body && root.contains(a) && a.dataset ? (a.dataset.fk || "") : ""; }
+function focusBack(root, fk) {
+  if (!fk) return;
+  for (const el of root.querySelectorAll("[data-fk]")) if (el.dataset.fk === fk) { if (!el.disabled) el.focus({ preventScroll: true }); return; }
+}
+function redraw(root, fn, fallback) {                    // fallback: odaktaki denetim yok olduysa odağın gideceği yer
+  const a = document.activeElement, had = !!a && a !== document.body && root.contains(a), fk = focusKey(root);
+  fn(); focusBack(root, fk);
+  if (had && fallback && !root.contains(document.activeElement)) { const el = fallback(); if (el) el.focus({ preventScroll: true }); }
+}
+/* ---- yanlışlıkla çift tetikleme ---- */
+/* Tap: son dokunuşun yeri ve anı. guard: bu ana dek, aynı yere gelen ikinci dokunuş durum kutusunda sayılmaz (çift
+   dokunuşun ikincisi, yerine kayan başka notu da tamamlamasın). Arada başka bir yere dokunulursa koruma kalkar.
+   Basılı tutulan Enter/boşluk bir düğmeyi art arda tetiklemez. */
+const Tap = { x: -99, y: -99, t: 0, guard: 0, gx: 0, gy: 0 };
+Tap.arm = () => { Tap.guard = performance.now() + 450; Tap.gx = Tap.x; Tap.gy = Tap.y; };
+Tap.blocked = (e) => !!e.detail && performance.now() < Tap.guard;
+document.addEventListener("pointerdown", (e) => {
+  Tap.x = e.clientX; Tap.y = e.clientY; Tap.t = performance.now();
+  if (Tap.guard && Math.hypot(Tap.x - Tap.gx, Tap.y - Tap.gy) > 30) Tap.guard = 0;
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (e.repeat && (e.key === "Enter" || e.key === " ") && e.target && e.target.closest && e.target.closest("button")) e.preventDefault();
+}, true);
+
+/* ---- sayfalar (dialog) ve geri tuşu ---- */
+/* Android geri tuşu: Chrome 120+ açık <dialog>'u kendisi kapatır (CloseWatcher; aşağıdaki "cancel" olayı gelir),
+   bu yüzden tarayıcı geçmişiyle oynanmaz. CloseWatcher'ı olmayan tarayıcıda tek bir koruyucu geçmiş kaydı
+   tutulur: geri tuşu onu tüketir ve üstteki sayfa kapanır. Kapatırken history.back() çağrılmaz; Firebase'in
+   giriş çerçevesi (iframe) de aynı geçmişi paylaştığı için "bir ileri, bir geri" eşleştirmesine güvenilmez. */
+const Sheets = { stack: [], legacy: !("CloseWatcher" in window), guard: !!(history.state && history.state.centikGuard) };
+const topSheet = () => Sheets.stack[Sheets.stack.length - 1] || null;
+function guardPush() {
+  if (!Sheets.legacy || Sheets.guard) return;
+  try { history.pushState({ centikGuard: 1 }, ""); Sheets.guard = true; } catch (e) {}
+}
+function sheetOpen(dlg, onclose) {
+  if (dlg.open) return;
+  closeMenu();
+  dlg._onclose = onclose || null;
+  dlg._openT = performance.now() - Tap.t < 700 ? performance.now() : 0;   // dokunuşla açıldı: aşağıdaki korumaya bak
+  dlg._openX = Tap.x; dlg._openY = Tap.y;
+  dlg._opener = focusKey(document.body);                  // kapanınca odağın döneceği denetim (liste bu arada yeniden çizilebilir)
+  dlg.showModal();
+  Sheets.stack.push(dlg);
+  guardPush();
+}
+function sheetClose(dlg) {
+  if (!dlg.open) return;
+  const i = Sheets.stack.lastIndexOf(dlg);
+  if (i >= 0) Sheets.stack.splice(i, 1);
+  const tEl = toastEl(), fk = dlg._opener;
+  if (dlg.contains(tEl)) (topSheet() || document.body).append(tEl);   // iç içe sayfada: bir alttaki sayfanın üstünde kalır
+  dlg.close();
+  if (dlg._onclose) { const f = dlg._onclose; dlg._onclose = null; f(); }   // dokunuşun içinde, hemen
+  refresh();
+  if (fk) requestAnimationFrame(() => requestAnimationFrame(() => {       // liste çizildikten sonra: odak boşta kaldıysa açan denetime döner
+    const a = document.activeElement;
+    if (!a || a === document.body) focusBack(topSheet() || document.body, fk);
+  }));
+}
+/* sheetFill: sayfanın içeriğini yeniden kurar; içindeki toast, kaydırma konumu ve odak korunur */
+function sheetFill(dlg, label, ...kids) {
+  const tEl = toastEl(), keep = dlg.contains(tEl), old = dlg.querySelector(".sheet-b"), y = old ? old.scrollTop : 0, fk = focusKey(dlg);
+  if (keep) document.body.append(tEl);
+  dlg.setAttribute("aria-label", label);
+  dlg.replaceChildren(...kids);
+  if (keep) dlg.append(tEl);
+  const body = dlg.querySelector(".sheet-b");
+  if (body && y) body.scrollTop = y;
+  focusBack(dlg, fk);
+}
+window.addEventListener("popstate", () => {
+  if (!Sheets.legacy) return;
+  Sheets.guard = !!(history.state && history.state.centikGuard);
+  const top = topSheet();
+  if (top) { sheetClose(top); if (Sheets.stack.length) guardPush(); }
+});
+for (const dlg of document.querySelectorAll("dialog")) {
+  /* Çift dokunuşun ikincisi, yeni açılan sayfada parmağın altına denk gelen denetimi çalıştırmasın: açılıştan
+     sonraki kısa sürede, açan dokunuşun hemen yakınına gelen dokunuşlar yutulur. */
+  for (const type of ["pointerdown", "mousedown", "touchstart", "click"]) dlg.addEventListener(type, (e) => {
+    const pt = e.touches ? e.touches[0] : e;
+    if (performance.now() - (dlg._openT || 0) < 450 && (type !== "click" || e.detail) && pt && Math.hypot(pt.clientX - dlg._openX, pt.clientY - dlg._openY) < 44) {
+      if (e.cancelable) e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, { capture: true, passive: false });
+  dlg.addEventListener("cancel", (e) => { e.preventDefault(); sheetClose(dlg); });          // Esc, Android geri tuşu
+  dlg.addEventListener("pointerdown", (e) => { dlg._down = e.target === dlg; });
+  dlg.addEventListener("click", (e) => { const out = e.target === dlg && dlg._down; dlg._down = false; if (out) sheetClose(dlg); });   // dışına dokunma (içeride başlayan sürükleme sayılmaz)
+}
+function sheetHead(dlg, title, extra) {
+  return h("div", { class: "sheet-h" },
+    h("button", { class: "ib", type: "button", "aria-label": t("a_back"), onclick: () => sheetClose(dlg) }, icon("back")),
+    h("h2", { text: title }), extra || null);
+}
+
+/* ---- toast, menü ---- */
+let toastAct = null;                                     // ekrandaki toast'ın eylemi ("Geri al"); Ctrl+Z de bunu çalıştırır
+function toastEl() {
+  let el = $("#toast");
+  if (!el) { el = h("div", { class: "toast", id: "toast", role: "status", "aria-live": "polite" }); document.body.append(el); }
+  if (!el._wired) {                                       // üzerinde durulurken ya da odaktayken kaybolmaz
+    el._wired = true;
+    const hold = () => clearTimeout(toastT), go = () => { if (el.classList.contains("is-on")) { clearTimeout(toastT); toastT = setTimeout(hideToast, 2500); } };
+    el.addEventListener("pointerenter", hold); el.addEventListener("focusin", hold);
+    el.addEventListener("pointerleave", go); el.addEventListener("focusout", go);
+  }
+  return el;
+}
+function toast(msg, actLabel, act, ms) {
+  const el = toastEl(), host = topSheet() || document.body, kids = [h("span", { text: msg })];
+  if (el.parentNode !== host) host.append(el);
+  toastAct = actLabel ? () => { hideToast(); act(); } : null;
+  if (actLabel) kids.push(h("button", { type: "button", text: actLabel, onclick: toastAct }));
+  el.replaceChildren(...kids);
+  el.classList.add("is-on");
+  clearTimeout(toastT);
+  toastT = setTimeout(hideToast, ms || (actLabel ? 7000 : 3400));
+}
+function hideToast() {
+  clearTimeout(toastT);
+  const el = toastEl(), btn = el.querySelector("button");
+  el.classList.remove("is-on");
+  toastAct = null;
+  if (btn) btn.remove();                                  // görünmeyen "Geri al" klavyeyle de tetiklenemesin
+  toastT = setTimeout(() => el.replaceChildren(), 250);   // solma bitince metin de kalkar: ekran okuyucu eski mesajı bulmasın
+}
+function toastQuiet(msg) {                               // önemsiz bilgi: ekranda "Geri al" duruyorsa onu ezmez
+  const el = toastEl();
+  if (!(el.classList.contains("is-on") && el.querySelector("button"))) toast(msg);
+}
+let menuFor = null;
+function closeMenu(back) {
+  const m = $("#menu"), anchor = menuFor;
+  if (!m.classList.contains("is-open")) return;
+  m.classList.remove("is-open");
+  menuFor = null;
+  if (back && anchor && anchor.isConnected) anchor.focus();
+}
+function statusMenu(anchor, id) {
+  const n = S.notes.get(id), m = $("#menu");
+  if (!n || n.del || !anchor.isConnected) return;
+  menuFor = anchor;
+  m.setAttribute("aria-label", t("ed_status"));
+  m.replaceChildren(...STATUSES.map((st) => h("button", { type: "button", role: "menuitemradio", "aria-checked": String(n.st === st),
+    onclick: () => { closeMenu(true); setStatus(id, st); } }, h("span", { class: "st", "data-st": st }, h("i")), t("st_" + st))));
+  m.classList.add("is-open");
+  const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - mw - 8)) + "px";
+  m.style.top = (r.bottom + mh + 8 > innerHeight ? Math.max(8, r.top - mh - 4) : r.bottom + 2) + "px";
+  (m.querySelector('[aria-checked="true"]') || m.firstChild).focus();
+}
+$("#menu").addEventListener("keydown", (e) => {
+  const items = [...e.currentTarget.querySelectorAll("button")], i = items.indexOf(document.activeElement);
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length].focus(); }
+  else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(true); }
+  else if (e.key === "Tab") closeMenu(true);
+});
+document.addEventListener("pointerdown", (e) => { if (!e.target.closest || !e.target.closest("#menu")) closeMenu(); }, true);
+window.addEventListener("scroll", () => closeMenu(), { passive: true });
+
+/* ---- kabuk ---- */
+function buildShell() {
+  const q = $("#q") ? $("#q").value : UI.q;
+  $("#top").replaceChildren(
+    h("div", { class: "brand" }, logo(), h("b", { text: APP.name })),
+    h("label", { class: "search" }, icon("search"), h("span", { class: "vh", text: t("search_ph") }),
+      h("input", { id: "q", type: "search", placeholder: t("search_ph"), autocomplete: "off", enterkeyhint: "search", value: q,
+        oninput: (e) => { UI.q = e.target.value; UI.qf = fold(UI.q).split(/\s+/).filter(Boolean); UI.limit = PAGE; invalidate(); } })),
+    h("button", { class: "ib", id: "btnFilter", type: "button", "aria-label": t("a_filter"), onclick: openFilter }, icon("filter"), h("span", { class: "dot", hidden: true })),
+    h("button", { class: "ib", id: "btnSettings", type: "button", "aria-label": t("a_settings"), onclick: openSettings }, icon("gear"), h("span", { class: "dot", hidden: true })));
+  $("#tabs").setAttribute("aria-label", t("a_views"));
+  $("#tabs").replaceChildren(h("div", { class: "tabs-in" },
+    h("button", { class: "tab", id: "tabAgenda", type: "button", onclick: () => setTab("agenda") }, icon("agenda"), h("span", { text: t("tab_agenda") })),
+    h("button", { class: "add", id: "btnAdd", type: "button", "aria-label": t("add"), onclick: () => openEditor(null) }, icon("plus")),
+    h("button", { class: "tab", id: "tabNotes", type: "button", onclick: () => setTab("notes") }, icon("notes"), h("span", { text: t("tab_notes") }))));
+  bannerKey = ""; ringKey = "";
+}
+function setTab(tab) { UI.tab = tab; UI.limit = PAGE; saveUi(); window.scrollTo(0, 0); invalidate(); }
+function render() {
+  const main = $("#main"), a = document.activeElement, inMain = !!a && a !== document.body && main.contains(a);
+  const fk = inMain && a.dataset ? (a.dataset.fk || "") : "", wasSt = inMain && a.classList.contains("st");
+  const ri = inMain ? [...main.querySelectorAll(".row")].indexOf(a.closest(".row")) : -1;
+  const bar = main.querySelector(".fbar"), sx = bar ? bar.scrollLeft : 0;
+  main.replaceChildren(UI.tab === "agenda" ? viewAgenda() : viewNotes());
+  const bar2 = main.querySelector(".fbar");
+  if (bar2 && sx) bar2.scrollLeft = sx;                   // süzgeç çubuğu kaydırıldığı yerde kalır
+  if (inMain) {                                           // klavye odağı: aynı denetim; satır gittiyse aynı sıradaki satır
+    let el = null;
+    if (fk) for (const x of main.querySelectorAll("[data-fk]")) if (x.dataset.fk === fk) { el = x; break; }
+    if (!el && UI.moreFrom >= 0) { const row = main.querySelectorAll(".row")[UI.moreFrom]; el = row ? row.querySelector(".row-open") : null; }   // "daha göster": yeni gelen ilk satır
+    if (!el && ri >= 0) { const rows = main.querySelectorAll(".row"), row = rows[Math.min(ri, rows.length - 1)]; el = row ? row.querySelector(wasSt ? ".st" : ".row-open") : null; }
+    if (!el) el = main.querySelector('.fbar .seg[aria-pressed="true"]') || $("#btnAdd");   // satır kalmadı: odak boşta kalmasın
+    if (el) el.focus({ preventScroll: true });
+  }
+  UI.moreFrom = -1;
+  for (const [id, tab] of [["tabAgenda", "agenda"], ["tabNotes", "notes"]]) {
+    if (UI.tab === tab) $("#" + id).setAttribute("aria-current", "page"); else $("#" + id).removeAttribute("aria-current");
+  }
+  renderChrome();
+}
+function renderChrome() {
+  const out = [], keys = [], pend = Cal.active() ? Cal.pending().crit.length : 0, chores = Cal.active() && Cal.chores();
+  const add = (key, el) => { keys.push(key); out.push(el); };
+  const rings = [], rkeys = [];
+  for (const r of UI.rings) {
+    const n = S.notes.get(r.id);
+    if (n && !n.del && n.st !== "done" && n.due) { rkeys.push(r.id + ":" + r.at + ":" + calTitle(n)); rings.push(ringCard(n, r.at)); }
+  }
+  const rkey = lang + "|" + today() + "|" + rkeys.join("|");
+  if (rkey !== ringKey) { ringKey = rkey; const box = $("#rings"); redraw(box, () => box.replaceChildren(...rings), afterBanner); }
+  if (UI.storageBad || DB.dead) add("storage", banner("bad", t("b_storage")));
+  if (UI.update) add("update", banner("", t("b_update"), t("reload"), () => location.reload()));
+  if (Cloud.user && Cloud.err) add("sync:" + Cloud.err, banner("bad", t("b_sync"), t("a_settings"), openSettings));
+  if (Cal.active() && Cal.err) add("cal:" + Cal.err, banner("bad", t("b_cal"), t("a_settings"), openSettings));
+  else if (pend && !Cal.busy) add("pend:" + pend, banner("warn", tn("b_pending", pend), t("send"), () => Cal.kick({ gesture: true, explicit: true })));
+  else if (chores && !Cal.busy && !Cal.tokenOk()) add("chores", banner("warn", t("b_orphan"), t("b_orphan_btn"), () => Cal.kick({ gesture: true, explicit: true })));
+  if (!Cloud.user && !UI.hintOff && liveNotes().some((n) => n.st !== "done" && n.due && n.due.t && n.rem.length))
+    add("hint", banner("", t("b_hint"), t("connect"), openSettings, () => { UI.hintOff = true; saveUi(); refresh(); }));
+  const key = lang + "|" + today() + "|" + keys.join("|");
+  if (key !== bannerKey) {                                // yalnızca değişince: ekran okuyucu aynı uyarıyı yeniden okumasın
+    bannerKey = key;
+    const box = $("#banners");
+    redraw(box, () => box.replaceChildren(...out), afterBanner);
+  }
+  $("#btnFilter .dot").hidden = !UI.tagSel.size;
+  const dot = $("#btnSettings .dot"), bad = (Cloud.user && Cloud.err) || (Cal.active() && Cal.err);
+  dot.hidden = !bad && !pend && !chores;
+  dot.classList.toggle("bad", !!bad);
+  if ($("#dlgSet").open) drawCloud();
+}
+const afterBanner = () => $("#main [data-fk]") || $("#btnAdd");
+function banner(kind, text, actLabel, act, dismiss) {
+  return h("div", { class: "banner" + (kind ? " " + kind : ""), role: kind === "bad" ? "alert" : "status" },
+    h("p", { text }),
+    actLabel ? h("button", { class: "act", type: "button", dataset: { fk: "b-act-" + kind }, text: actLabel, onclick: act }) : null,
+    dismiss ? h("button", { class: "x", type: "button", "aria-label": t("ring_close"), onclick: dismiss }, icon("x")) : null);
+}
+function ringCard(n, at) {
+  const w = Alarm.when(at);
+  return h("div", { class: "ring", role: "alert" },
+    h("span", { class: "ring-t", text: w.t }),
+    h("span", { class: "ring-n", text: calTitle(n) + (w.day ? " (" + w.day + ")" : "") }),
+    h("div", { class: "ring-a" },
+      h("button", { class: "solid", type: "button", text: t("ring_done"), onclick: () => { Alarm.dismiss(n.id); setStatus(n.id, "done"); } }),
+      h("button", { type: "button", text: t("ring_open"), onclick: () => { Alarm.dismiss(n.id); openEditor(n.id); } }),
+      h("button", { type: "button", text: t("ring_close"), onclick: () => Alarm.dismiss(n.id) })));
+}
+
+/* ---- satır ---- */
+function rowEl(n, ctx, sfx) {                            // sfx: bölümlemede aynı not birden çok bölümde yer alabilir
+  const L = n.due ? dueLocal(n) : null, tags = noteTags(n), late = isLate(n);
+  const head = n.title.trim(), first = n.body.trim().split("\n")[0];
+  sfx = sfx || "";
+  const stBtn = h("button", { class: "st", type: "button", "data-st": n.st, dataset: { fk: "st-" + n.id + sfx }, "aria-label": t(n.st === "done" ? "a_undone" : "a_done") }, h("i"));
+  bindStatus(stBtn, n.id);
+  const meta = [];
+  if (n.pin) meta.push(h("span", { class: "mini", role: "img", "aria-label": t("pinned") }, icon("pin")));
+  if (n.st === "doing" || n.st === "wait") meta.push(h("span", { class: "mini", text: t("st_" + n.st) }));
+  for (const tag of tags.slice(0, 3)) meta.push(h("span", { class: "chip h" + tagHue(tag), text: tag.name }));
+  if (tags.length > 3) meta.push(h("span", { class: "mini", text: "+" + (tags.length - 3) }));
+  if (n.cl.length) meta.push(h("span", { class: "mini" }, icon("list"), n.cl.filter((c) => c.d).length + "/" + n.cl.length));
+  if (n.rep && n.due) meta.push(h("span", { class: "mini", role: "img", "aria-label": t("rep_" + n.rep) }, icon("repeat")));
+  const right = [];
+  if (L) {
+    const bell = L.t && n.rem.length ? icon("bell", n.st !== "done" && Cal.state(n) === "wait" ? "unsent" : "") : null;
+    if (ctx === "day") { if (L.t) right.push(h("span", { class: "when" }, bell, L.t)); }
+    else {
+      right.push(h("span", { class: "when" + (late ? " is-late" : "") }, L.t ? null : bell, relDay(L.d)));
+      if (L.t) right.push(h("span", { class: "when sub" + (late ? " is-late" : "") }, bell, L.t));
+    }
+  }
+  return h("div", { class: "row" + (n.st === "done" ? " is-done" : "") }, stBtn,
+    h("button", { class: "row-open", type: "button", dataset: { fk: "open-" + n.id + sfx }, onclick: () => openEditor(n.id) },
+      h("span", { class: "row-main" },
+        h("span", { class: "row-t" + (head || first ? "" : " none"), text: head || first || t("untitled") }),
+        head && first ? h("span", { class: "row-x", text: first }) : null,
+        h("span", { class: "row-m" }, meta)),
+      h("span", { class: "row-r" }, right)));
+}
+function bindStatus(btn, id) {                           // dokun: tamam / geri al · basılı tut ya da sağ tık: tüm durumlar
+  let timer = 0, skip = false;                           // skip: bu basışta menü açıldı; bırakınca gelen tıklama sayılmaz (ne kadar basılı tutulursa tutulsun)
+  const stop = () => clearTimeout(timer);
+  const menu = () => { skip = true; statusMenu(btn, id); };
+  btn.addEventListener("pointerdown", () => { skip = false; stop(); timer = setTimeout(menu, 480); });
+  btn.addEventListener("keydown", () => { skip = false; });
+  btn.addEventListener("pointerup", stop); btn.addEventListener("pointerleave", stop); btn.addEventListener("pointercancel", stop);
+  btn.addEventListener("contextmenu", (e) => { e.preventDefault(); stop(); if (!$("#menu").classList.contains("is-open")) menu(); });
+  btn.addEventListener("click", (e) => {
+    if (skip) { skip = false; return; }
+    if (Tap.blocked(e)) return;                            // çift dokunuşun ikincisi: satır kaydı, parmağın altında artık başka not var
+    const n = S.notes.get(id);
+    if (n && !n.del) { setStatus(id, n.st === "done" ? "open" : "done"); Tap.arm(); }
+  });
+}
+
+/* ---- ajanda ---- */
+function viewAgenda() {
+  const now = Date.now(), td = today(), dated = liveNotes().filter((n) => n.due && n.st !== "done");
+  const fx = facets(), all = dated.filter((n) => matches(n, true, fx)), late = [], later = [], days = new Map([[td, []]]);
+  for (const n of all) {
+    const d = dueLocal(n).d;
+    if (isLate(n, now)) late.push(n);
+    else if (dayDiff(d, td) > 7) later.push(n);
+    else { if (!days.has(d)) days.set(d, []); days.get(d).push(n); }
+  }
+  const root = h("div", { class: "agenda" });
+  if (late.length) root.append(daySection({ cls: "is-late", title: t("late"), notes: late.sort(cmpDue), ctx: "late" }));
+  for (const d of [...days.keys()].sort()) {
+    const k = dayDiff(d, td), list = days.get(d).sort(cmpDue);
+    let empty = null;
+    if (k === 0 && !list.length) {
+      if (!dated.length) empty = h("div", { class: "empty" }, h("h2", { text: t("ag_empty_t") }), h("p", { text: t("ag_empty_p") }),
+        h("button", { class: "btn pri", type: "button", text: t("add"), onclick: () => openEditor(null) }));
+      else if (!all.length && filtering()) empty = h("div", { class: "empty" }, h("h2", { text: t("no_match_t") }), h("p", { text: t("no_match_p") }),
+        h("button", { class: "btn", type: "button", text: t("clear_filters"), onclick: clearFilters }));
+      else empty = h("p", { class: "day-none", text: t("today_none") });
+    }
+    root.append(daySection({ cls: k === 0 ? "is-today" : "", num: d.slice(8), wd: fmtWd(d), title: k === 0 ? t("today") : k === 1 ? t("tomorrow") : fmtWeekday(d),
+      sub: fmtDayLong(d), notes: list, ctx: "day", empty }));
+  }
+  if (later.length) root.append(daySection({ cls: "is-later", title: t("later"), notes: later.sort(cmpDue), ctx: "later" }));
+  return root;
+}
+function daySection(o) {
+  return h("section", { class: "day " + (o.cls || "") },
+    h("div", { class: "day-mark", "aria-hidden": "true" }, o.num ? [h("span", { class: "day-num", text: o.num }), h("span", { class: "day-wd", text: o.wd })] : null),
+    h("div", { class: "day-body" },
+      h("h2", { class: "day-h" }, o.title, o.sub ? h("small", { text: o.sub }) : null),
+      o.empty || o.notes.map((n) => rowEl(n, o.ctx))));
+}
+
+/* ---- notlar ---- */
+function viewNotes() {
+  const root = h("div", { class: "notes" }), fx = facets(), pool = liveNotes().filter((n) => matches(n, true, fx));
+  const count = (v) => pool.filter((n) => (v === "all" ? true : v === "active" ? n.st !== "done" : n.st === v)).length;
+  const segs = [["active", t("f_active")], ["open", t("st_open")], ["doing", t("st_doing")], ["wait", t("st_wait")], ["done", t("st_done")], ["all", t("f_all")]];
+  root.append(h("div", { class: "fbar", role: "group", "aria-label": t("ed_status") }, segs.map(([v, label]) =>
+    h("button", { class: "seg", type: "button", dataset: { fk: "seg-" + v }, "aria-pressed": String(UI.status === v), onclick: () => { UI.status = v; UI.limit = PAGE; saveUi(); invalidate(); } }, label, h("span", { class: "n", text: count(v) })))));
+  const full = pool.filter((n) => matches(n, false, fx)).sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || (b.u || 0) - (a.u || 0));
+  const list = full.slice(0, UI.limit);                  // çok uzun listede önce ilk bölüm çizilir
+  if (!full.length) {                                     // neden boş: hiç not yok · süzgeç/arama gizliyor · yalnızca bu bölüm boş
+    const none = !liveNotes().length, hidden = !none && filtering();
+    const key = none ? "no_empty" : hidden ? "no_match" : UI.status === "active" ? "no_active" : "no_st";
+    root.append(h("div", { class: "empty" }, h("h2", { text: t(key + "_t") }), h("p", { text: t(key + "_p") }),
+      hidden ? h("button", { class: "btn", type: "button", text: t("clear_filters"), onclick: clearFilters })
+        : h("button", { class: "btn pri", type: "button", text: t("add"), onclick: () => openEditor(null) })));
+    return root;
+  }
+  const section = (title, part, sfx) => { if (part.length) root.append(h("section", null, h("h2", { class: "sec-h" }, title, h("small", { text: part.length })), part.map((n) => rowEl(n, "notes", sfx)))); };
+  const g = UI.groupBy && UI.groupBy !== "st" ? liveGroup(UI.groupBy) : null, ts = g ? tagsOfGroup(g.id) : [];
+  if (UI.groupBy === "st") for (const st of STATUSES) section(t("st_" + st), list.filter((n) => n.st === st));
+  else if (ts.length) {                                   // bu gruptan iki etiketi olan not iki bölümde de yer alır
+    const ids = new Set(ts.map((x) => x.id));
+    for (const tag of ts) section(tag.name, list.filter((n) => n.tags.includes(tag.id)), "@" + tag.id);
+    section(t("fl_rest"), list.filter((n) => !n.tags.some((id) => ids.has(id))), "@");
+  } else root.append(h("div", null, list.map((n) => rowEl(n, "notes"))));   // bölümleme yok (ya da seçili grupta etiket kalmadı)
+  if (full.length > list.length) root.append(h("div", { class: "more" },
+    h("button", { class: "btn quiet", type: "button", dataset: { fk: "more" }, text: t("more", { n: full.length - list.length }), onclick: () => { UI.moreFrom = list.length; UI.limit += PAGE; invalidate(); } })));
+  return root;
+}
+
+/* ---- düzenleyici ---- */
+/* Yazdıkça kendiliğinden kaydeder (yazı durunca yarım saniyede, hiç durmasa da birkaç saniyede bir). Takvim'e
+   gönderme, sayfa kapanırken (bir dokunuşun içinde) yapılır.
+   Kapanış kuralları:
+   - Yazısı olan not her zaman kalır.
+   - Yeni not, yazısı yoksa yalnızca kullanıcı bilerek bir şey verdiyse kalır: tarih/saat, etiket, durum ya da
+     sabitleme ("başlıksız" görünür). Ajandadan ya da süzgeç açıkken gelen hazır tarih, etiket ve durum sayılmaz.
+   - Var olan not, açıldığında yazılıydı ve yazısının tamamı silindiyse silinir (geri alınabilir; "Geri al" yazılı
+     son hâlini getirir). Açıldığında yazısı olmayan not olduğu gibi kalır. */
+const CL_MAX = 500;                                      // bir nottaki kontrol listesi maddesi
+const Ed = {
+  n: null, isNew: false, fresh: false, hadText: false, preset: null, textSnap: null, base: "", timer: 0, since: 0, touched: false, typing: false,
+  els: {}, customOpen: false, remMsg: "", cNum: "15", cUnit: "1", lastGroup: "",
+  hasText(n) { return !!(n.title.trim() || n.body.trim() || n.cl.some((c) => c.x.trim())); },
+  deliberate(n) {                                        // hazır gelenin dışında, kullanıcının verdiği bir şey var mı
+    const p = Ed.preset || { due: null, tags: [], st: "open" };
+    return !!n.pin || n.st !== p.st || (!!n.due && JSON.stringify(n.due) !== JSON.stringify(p.due)) || n.tags.some((id) => !p.tags.includes(id));
+  },
+  changed() {
+    Ed.touched = true;
+    clearTimeout(Ed.timer); Ed.els.state.textContent = "";
+    if (!Ed.since) Ed.since = Date.now();
+    Ed.timer = setTimeout(Ed.save, Date.now() - Ed.since > 2500 ? 0 : 500);
+  },
+  /* force: uygulama arka plana giderken; yazısı olmasa da bilerek tarih/etiket verilmiş yeni notu yazar */
+  save(force) {
+    clearTimeout(Ed.timer); Ed.timer = 0; Ed.since = 0;
+    const n = Ed.n;
+    if (!n) return;
+    const text = Ed.hasText(n);
+    if (Ed.isNew && !text && !(force === true && Ed.deliberate(n))) return;   // yazısı olmayan yeni not kapanana dek kaydedilmez
+    const snap = JSON.stringify(n);
+    if (snap === Ed.base) return;
+    Ed.base = snap; Ed.isNew = false;
+    if (text) Ed.textSnap = clone(n);
+    commit(clone(n));
+    if (Ed.els.state) Ed.els.state.textContent = t("saved");
+    if (!persistAsked && navigator.storage && navigator.storage.persist) { persistAsked = true; navigator.storage.persist().catch(() => {}); }
+  },
+  hide() {                                               // uygulama arka plana gidiyor (telefon her an kapatabilir): son fırsat
+    if (!Ed.n) return;
+    const add = Ed.els.clAdd;
+    if (add && add.value.trim()) { Ed.addItems(add.value); add.value = ""; }
+    Ed.save(true);
+  },
+  closed() {                                             // sayfa kapandı: son hâli kaydet, Takvim'e gönder
+    const n = Ed.n, wasNew = Ed.isNew, pendingItem = Ed.els.clAdd ? Ed.els.clAdd.value : "", touched = Ed.touched;
+    clearTimeout(Ed.timer); Ed.timer = 0; Ed.since = 0; Ed.n = null; Ed.customOpen = false; Ed.remMsg = ""; Ed.typing = false;
+    $("#dlgEd").replaceChildren();
+    if (!n) return;                                       // not zaten silindi (çöp kutusu ya da başka cihaz)
+    if (pendingItem.trim()) n.cl = n.cl.concat(splitItems(pendingItem)).slice(0, CL_MAX);
+    n.title = n.title.trim();
+    if (!n.body.trim()) n.body = "";
+    n.cl = n.cl.filter((c) => c.x.trim());
+    if (!n.due) n.rep = "";
+    weekdayFix(n);                                        // tarih klavyeyle yazılıp alandan çıkılmadan kapatıldıysa
+    if (!Ed.hasText(n) && (Ed.fresh ? !Ed.deliberate(n) : Ed.hadText)) {
+      if (!wasNew) deleteNote(n.id, Ed.textSnap);
+      return;
+    }
+    if (JSON.stringify(n) !== Ed.base) commit(clone(n));
+    if (Ed.fresh && UI.tab === "notes" && UI.status !== "all" && (UI.status === "active" ? n.st === "done" : n.st !== UI.status)) {
+      UI.status = n.st === "done" ? "all" : "active"; saveUi();   // yeni not, bakılan bölümde görünmeyecekse göründüğü bölüme geçilir
+    }
+    Cal.kick({ gesture: touched });                       // dokunulmamış notu açıp kapamak giriş penceresi açmaz
+  },
+  remote(r) {                                            // açık not başka cihazda ya da sekmede değişti
+    const dirty = !!Ed.timer || JSON.stringify(Ed.n) !== Ed.base;
+    if (dirty) return;                                    // burada kaydedilmemiş değişiklik var: kaydedilince o kazanır (silinmiş not da yeniden yaşar)
+    if (r.del) { Ed.n = null; sheetClose($("#dlgEd")); toast(t("t_gone")); return; }
+    const E = Ed.els, add = E.clAdd ? E.clAdd.value : "", tagName = E.tagInput ? E.tagInput.value : "";
+    Ed.n = clone(publicCopy(r)); Ed.base = JSON.stringify(Ed.n);
+    if (!Ed.fresh) Ed.hadText = Ed.hasText(Ed.n);
+    if (Ed.hasText(Ed.n)) Ed.textSnap = clone(Ed.n);
+    buildEditor();
+    if (add) Ed.els.clAdd.value = add;                    // yazılmakta olan madde ve etiket adı yerinde kalır
+    if (tagName) Ed.els.tagInput.value = tagName;
+  },
+  del() {
+    const n = Ed.n, wasNew = Ed.isNew;
+    Ed.n = null; clearTimeout(Ed.timer); Ed.timer = 0;
+    sheetClose($("#dlgEd"));
+    if (n && !wasNew) deleteNote(n.id);
+  },
+  head() {
+    const n = Ed.n, pin = Ed.els.pin;
+    pin.setAttribute("aria-pressed", String(!!n.pin));
+    pin.setAttribute("aria-label", t(n.pin ? "a_unpin" : "a_pin"));
+  },
+  drawStatus() {
+    const n = Ed.n, box = Ed.els.status;
+    redraw(box, () => box.replaceChildren(...STATUSES.map((st) => h("button", { type: "button", dataset: { fk: "st-" + st }, "aria-pressed": String(n.st === st), onclick: (e) => {
+      if (st === "done") {
+        if (Tap.blocked(e)) return;                        // çift dokunuş tekrarlı notu iki kez ilerletmesin
+        if (completeNote(n) === "rolled") { Tap.arm(); toast(t("t_next", { when: whenText(n) })); Ed.drawWhen(); Ed.drawCl(); }
+      } else { n.st = st; delete n.doneAt; }
+      Ed.drawStatus(); Ed.changed();
+    } }, h("span", { class: "st", "data-st": st }, h("i")), h("span", { text: t("st_" + st) })))));
+  },
+  drawWhen() {
+    const n = Ed.n, E = Ed.els, L = n.due ? dueLocal(n) : null;
+    E.date = h("input", { class: "in", type: "date", dataset: { fk: "date" }, "aria-label": t("ed_date"), value: L ? L.d : "", onchange: Ed.onDate, oninput: Ed.onDate,
+      onkeydown: () => { Ed.typing = true; }, onblur: Ed.onDateBlur });
+    E.time = h("input", { class: "in", type: "time", dataset: { fk: "time" }, "aria-label": t("ed_time"), value: L ? L.t : "", onchange: Ed.onTime, oninput: Ed.onTime });
+    E.clear = h("button", { class: "ib", type: "button", "aria-label": t("ed_clear"), title: t("ed_clear"),
+      onclick: () => { E.date.value = ""; E.time.value = ""; n.due = null; n.rep = ""; Ed.typing = false; Ed.afterWhen(); focusBack(E.when, "q_today"); } }, icon("x"));
+    E.extra = h("div", { class: "stack" });
+    redraw(E.when, () => E.when.replaceChildren(
+      h("div", { class: "fr" }, E.date, E.time, E.clear),
+      h("div", { class: "fr" }, [["q_today", 0], ["q_tomorrow", 1], ["q_week", 7]].map(([key, k]) =>
+        h("button", { class: "btn quiet sm", type: "button", dataset: { fk: key }, text: t(key), onclick: () => { Ed.typing = false; E.date.value = addDays(today(), k); Ed.onDate(); } }))),
+      E.extra));
+    Ed.drawExtra();
+  },
+  /* Tarih alanı klavyeyle yazılırken bir an boş görünür (ör. gün "0" ile başlarken). Bu yüzden boş alan yalnızca
+     tarihi kaldırır; saat ve tekrar yerinde durur ve tarih yeniden tamamlanınca geri gelir. Hepsini silmek için ✕.
+     "Hafta içi" kuralı da yazarken uygulanmaz (alanı her tuşta değiştirmek sonraki rakamları yanlış yere düşürür);
+     alandan çıkınca ya da not kapanınca uygulanır. Takvimden seçmede ve hazır düğmelerde hemen uygulanır. */
+  onDate() {
+    const n = Ed.n, E = Ed.els, v = E.date.value;
+    if (!v) { if (!n.due) return; n.due = null; }
+    else if (!isYmd(v) || v < "1900-01-01") return;        // yıl yazılırken ara değerler
+    else { n.due = { d: v, t: isHm(E.time.value) ? E.time.value : "" }; n.tz = DEV_TZ; }
+    Ed.afterWhen();
+  },
+  onDateBlur() {
+    if (!Ed.typing) return;
+    Ed.typing = false;
+    if (Ed.n && weekdayFix(Ed.n)) { Ed.els.date.value = Ed.n.due.d; toast(t("t_weekend")); Ed.drawExtra(); Ed.changed(); }
+  },
+  onTime() {
+    const n = Ed.n, E = Ed.els, v = E.time.value;
+    if (v && !isHm(v)) return;
+    if (!v && !n.due) return;
+    if (!isYmd(E.date.value)) E.date.value = today();
+    const firstTime = v && !(n.due && n.due.t);
+    n.due = { d: E.date.value, t: v || "" }; n.tz = DEV_TZ;
+    if (firstTime && !n.rem.length) n.rem = [0];
+    Ed.afterWhen();
+  },
+  afterWhen() {
+    if (!Ed.typing && weekdayFix(Ed.n)) { Ed.els.date.value = Ed.n.due.d; toast(t("t_weekend")); }
+    Ed.drawExtra(); Ed.changed();
+  },
+  addItems(text) {                                       // kontrol listesine madde(ler) ekler; sınır aşılırsa söyler
+    const n = Ed.n, room = CL_MAX - n.cl.length;
+    let items = splitItems(text);
+    if (!items.length) return false;
+    if (items.length > room) { items = items.slice(0, Math.max(0, room)); toast(t("lim_cl", { n: CL_MAX })); }
+    if (!items.length) return false;
+    n.cl = n.cl.concat(items); Ed.drawCl(); Ed.changed();
+    return true;
+  },
+  drawExtra() {
+    const n = Ed.n, E = Ed.els, kids = [];
+    E.clear.hidden = !n.due && !E.date.value && !E.time.value;
+    if (n.due) {
+      if (n.due.t) {
+        const rems = cleanRems(n.rem), full = rems.length >= REM_MAX;
+        const vals = [...new Set(REM_PRESETS.concat(rems))].sort((a, b) => a - b);
+        kids.push(h("div", { class: "fr" }, h("span", { class: "fr-l", text: t("ed_remind") }), h("div", { class: "fr grow" },
+          vals.map((m) => h("button", { class: "chip h0", type: "button", dataset: { fk: "rem-" + m }, "aria-pressed": String(rems.includes(m)), disabled: full && !rems.includes(m), text: remLabel(m),
+            onclick: () => { n.rem = rems.includes(m) ? rems.filter((x) => x !== m) : cleanRems(rems.concat(m)); Ed.remMsg = ""; Ed.drawExtra(); Ed.changed(); if (!E.extra.contains(document.activeElement)) focusBack(E.extra, "rem-custom"); } })),
+          h("button", { class: "chip h0", type: "button", dataset: { fk: "rem-custom" }, "aria-expanded": String(Ed.customOpen), disabled: full, text: t("rem_custom"), onclick: () => { Ed.customOpen = !Ed.customOpen; Ed.remMsg = ""; Ed.drawExtra(); } }))));
+        if (Ed.customOpen && !full) {
+          const num = h("input", { class: "in w-num", type: "number", min: "1", max: "999", inputmode: "numeric", value: Ed.cNum, dataset: { fk: "rem-n" }, "aria-label": t("rem_num"), oninput: (e) => { Ed.cNum = e.target.value; } });
+          const unit = h("select", { class: "in", dataset: { fk: "rem-u" }, "aria-label": t("rem_unit"), value: Ed.cUnit, onchange: (e) => { Ed.cUnit = e.target.value; } },
+            h("option", { value: "1", text: t("u_min") }), h("option", { value: "60", text: t("u_hour") }), h("option", { value: "1440", text: t("u_day") }));
+          kids.push(h("div", { class: "fr" }, h("span", { class: "fr-l" }), h("div", { class: "fr grow" }, num, unit, h("button", { class: "btn sm", type: "button", dataset: { fk: "rem-add" }, text: t("rem_add"), onclick: () => {
+            const v = Number(num.value);
+            if (num.value === "" || !Number.isFinite(v) || v < 0) { num.focus(); return; }
+            const m = Math.round(v * Number(unit.value));
+            if (m > REM_LIMIT) { Ed.remMsg = t("rem_limit"); Ed.drawExtra(); return; }   // Takvim en çok 4 hafta öncesini kabul eder; yazılan değer yerinde kalır
+            n.rem = cleanRems(rems.concat(m)); Ed.customOpen = false; Ed.remMsg = ""; Ed.cNum = "15"; Ed.cUnit = "1"; Ed.drawExtra(); Ed.changed(); focusBack(E.extra, "rem-" + m);
+          } }))));
+        }
+        if (Ed.remMsg) kids.push(note("bad", Ed.remMsg));
+        else if (full) kids.push(note("", t("rem_max")));
+      } else kids.push(note("", t("need_time")));
+      kids.push(h("div", { class: "fr" }, h("label", { class: "fr-l", for: "edRep", text: t("ed_repeat") }),
+        h("select", { class: "in grow", id: "edRep", dataset: { fk: "rep" }, value: n.rep || "", onchange: (e) => { n.rep = e.target.value; Ed.afterWhen(); } }, REPEATS.map((r) => h("option", { value: r, text: t("rep_" + r) })))));
+      if (n.due.t && (n.tz || DEV_TZ) !== DEV_TZ) kids.push(note("", t("tz_other", { tz: n.tz })));
+      if (Cal.active()) {                                   // kaydedilmiş hâli açıksa gerçek durumu, değiştiyse ne olacağını söyler
+        const st = !Ed.isNew && JSON.stringify(n) === Ed.base ? Cal.state(n) : "";
+        if (!n.due.t) kids.push(note("", t("cal_allday"), "cal"));
+        else if (st === "ok") kids.push(note("ok", t("cal_ok"), "cal"));
+        else if (st === "wait") kids.push(note("bad", t("cal_wait")));
+        else kids.push(note("", t("cal_will"), "cal"));
+      } else if (n.due.t && cleanRems(n.rem).length) kids.push(note("", t("cal_off"), "bell"));
+    }
+    redraw(E.extra, () => E.extra.replaceChildren(...kids));
+  },
+  drawTags() {
+    const n = Ed.n, E = Ed.els, kids = [], groups = liveGroups();
+    const chip = (tag) => h("button", { class: "chip h" + tagHue(tag), type: "button", dataset: { fk: "tag-" + tag.id }, "aria-pressed": String(n.tags.includes(tag.id)), text: tag.name,
+      onclick: (e) => { n.tags = n.tags.includes(tag.id) ? n.tags.filter((x) => x !== tag.id) : n.tags.concat(tag.id); e.currentTarget.setAttribute("aria-pressed", String(n.tags.includes(tag.id))); Ed.changed(); } });
+    for (const g of groups) { const ts = tagsOfGroup(g.id); if (ts.length) kids.push(h("div", { class: "tg-g" }, h("span", { class: "tg-n", text: g.name }), ts.map(chip))); }
+    const loose = tagsOfGroup("");
+    if (loose.length) kids.push(h("div", { class: "tg-g" }, kids.length ? h("span", { class: "tg-n", text: t("no_group") }) : null, loose.map(chip)));
+    if (!kids.length) kids.push(note("", t("ed_tags_none")));
+    const inp = h("input", { class: "in grow", type: "text", dataset: { fk: "tag-new" }, placeholder: t("ed_tag_ph"), "aria-label": t("ed_tag_new"), maxlength: "40", enterkeyhint: "done",
+      onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); add(); } } });
+    const sel = groups.length ? h("select", { class: "in", dataset: { fk: "tag-group" }, "aria-label": t("a_move"), value: liveGroup(Ed.lastGroup) ? Ed.lastGroup : "" }, h("option", { value: "", text: t("no_group") }), groups.map((g) => h("option", { value: g.id, text: g.name }))) : null;
+    const add = () => {
+      const name = inp.value.trim(), gid = sel ? sel.value : "";
+      if (!name) return;
+      Ed.lastGroup = gid;
+      const tag = liveTags().find((x) => fold(x.name) === fold(name) && ((tagGroup(x) || {}).id || "") === gid) || commit({ k: "t", id: newId(), name, g: gid, o: 0 });
+      if (!n.tags.includes(tag.id)) n.tags = n.tags.concat(tag.id);
+      Ed.drawTags(); Ed.changed(); Ed.els.tagInput.focus();
+    };
+    kids.push(h("div", { class: "fr tg-new" }, inp, sel, h("button", { class: "btn sm", type: "button", text: t("rem_add"), onclick: add })));
+    kids.push(h("div", { class: "fr" }, h("button", { class: "btn quiet sm", type: "button", dataset: { fk: "tags-edit" }, text: t("se_tags_btn"), onclick: openTags })));
+    E.tagInput = inp;
+    redraw(E.tags, () => E.tags.replaceChildren(...kids));
+  },
+  drawCl() {
+    const n = Ed.n, E = Ed.els;
+    const ul = h("ul", { class: "cl" }, n.cl.map((c) => h("li", { class: c.d ? "is-done" : "" },
+      h("label", { class: "cl-ck" }, h("input", { type: "checkbox", checked: !!c.d, "aria-label": c.x || t("ed_cl"), onchange: (e) => { c.d = e.target.checked; e.target.closest("li").classList.toggle("is-done", c.d); Ed.changed(); } })),
+      h("input", { type: "text", value: c.x, maxlength: "500", dataset: { fk: "cl-" + c.id }, "aria-label": t("ed_cl"), enterkeyhint: "next",
+        oninput: (e) => { c.x = e.target.value; Ed.changed(); },
+        onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); E.clAdd.focus(); } } }),
+      h("button", { class: "ib", type: "button", "aria-label": t("a_del_item"), onclick: () => { n.cl = n.cl.filter((x) => x !== c); Ed.drawCl(); Ed.changed(); Ed.els.clAdd.focus(); } }, icon("x")))));
+    const addNow = (text) => { if (Ed.addItems(text)) Ed.els.clAdd.focus(); };
+    E.clAdd = h("input", { type: "text", dataset: { fk: "cl-add" }, placeholder: t("ed_cl_ph"), "aria-label": t("ed_cl_ph"), maxlength: "500", enterkeyhint: "next",
+      onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); addNow(E.clAdd.value); } },
+      onpaste: (e) => { const txt = (e.clipboardData || window.clipboardData).getData("text"); if (/\n/.test(txt)) { e.preventDefault(); addNow(E.clAdd.value + txt); } } });
+    E.cl.replaceChildren(ul, h("div", { class: "cl cl-add" }, icon("plus"), E.clAdd));
+  }
+};
+function splitItems(text) {
+  return String(text || "").split("\n").map((s) => s.replace(/^\s*(?:[-*•]\s+|\[[ xX]?\]\s*)?/, "").trim()).filter(Boolean).slice(0, CL_MAX).map((x) => ({ id: newId().slice(9), x: x.slice(0, 500), d: false }));
+}
+function openEditor(id) {
+  const cur = id ? S.notes.get(id) : null, dlg = $("#dlgEd");
+  if ((id && (!cur || cur.del)) || dlg.open) return;
+  Ed.isNew = Ed.fresh = !cur;
+  /* yeni not, o an bakılan listede görünecek biçimde açılır: ajandada bugünün tarihiyle, süzgeç açıksa seçili
+     etiketlerle, "Sürüyor" / "Bekliyor" bölümündeyken o durumla. Bunlar hazır gelir; not yalnızca bunlarla kaydedilmez. */
+  Ed.preset = cur ? null : {
+    due: UI.tab === "agenda" ? { d: today(), t: "" } : null,
+    tags: [...UI.tagSel].filter(liveTag),
+    st: UI.tab === "notes" && (UI.status === "doing" || UI.status === "wait") ? UI.status : "open"
+  };
+  Ed.n = cur ? clone(publicCopy(cur)) : blankNote(clone(Ed.preset));
+  Ed.base = cur ? JSON.stringify(Ed.n) : "";
+  Ed.hadText = !!cur && Ed.hasText(Ed.n);
+  Ed.textSnap = Ed.hadText ? clone(Ed.n) : null;
+  Ed.touched = false; Ed.typing = false; Ed.since = 0;
+  Ed.customOpen = false; Ed.remMsg = ""; Ed.cNum = "15"; Ed.cUnit = "1";
+  buildEditor();
+  sheetOpen(dlg, Ed.closed);
+  grow(Ed.els.title); grow(Ed.els.body);
+  if (Ed.isNew) Ed.els.title.focus();
+}
+function buildEditor() {
+  const n = Ed.n, dlg = $("#dlgEd");
+  const old = dlg.querySelector(".sheet-b"), y = old ? old.scrollTop : 0, fk = focusKey(dlg), a = document.activeElement;
+  let sel = null;
+  try { if (fk && a && typeof a.selectionStart === "number") sel = [a.selectionStart, a.selectionEnd]; } catch (e) {}
+  const E = Ed.els = {};
+  E.state = h("span", { class: "state", "aria-live": "polite" });
+  E.pin = h("button", { class: "ib", type: "button", dataset: { fk: "pin" }, onclick: () => { n.pin = !n.pin; Ed.head(); Ed.changed(); } }, icon("pin"));
+  E.title = h("textarea", { class: "ed-title", rows: "1", dataset: { fk: "title" }, placeholder: t("ed_title_ph"), "aria-label": t("ed_title_ph"), maxlength: "500", value: n.title,
+    oninput: () => { n.title = E.title.value.replace(/\s*\n\s*/g, " "); grow(E.title); Ed.changed(); },
+    onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); E.body.focus(); } } });
+  E.body = h("textarea", { class: "ed-body", rows: "3", dataset: { fk: "body" }, placeholder: t("ed_body_ph"), "aria-label": t("ed_body_ph"), maxlength: String(BODY_MAX), value: n.body,
+    oninput: () => { n.body = E.body.value; grow(E.body); Ed.changed(); if (E.body.value.length >= BODY_MAX) toastQuiet(t("lim_body", { n: BODY_MAX.toLocaleString(lang === "tr" ? "tr-TR" : "en-GB") })); } });
+  E.status = h("div", { class: "stseg", role: "group", "aria-label": t("ed_status") });
+  E.when = h("div"); E.tags = h("div"); E.cl = h("div");
+  const fg = (label, el) => h("div", { class: "fg" }, h("p", { class: "fg-l", text: label }), el);
+  sheetFill(dlg, t("a_note"),
+    h("div", { class: "sheet-h" },
+      h("button", { class: "ib", type: "button", "aria-label": t("a_back"), onclick: () => sheetClose(dlg) }, icon("back")),
+      E.state, E.pin,
+      h("button", { class: "ib", type: "button", "aria-label": t("a_delete"), onclick: Ed.del }, icon("trash"))),
+    h("div", { class: "sheet-b" }, E.title, E.body, fg(t("ed_cl"), E.cl), fg(t("ed_when"), E.when), fg(t("ed_tags"), E.tags), fg(t("ed_status"), E.status)));
+  Ed.head(); Ed.drawStatus(); Ed.drawWhen(); Ed.drawTags(); Ed.drawCl();
+  if (dlg.open) { grow(E.title); grow(E.body); }
+  if (y) dlg.querySelector(".sheet-b").scrollTop = y;     // bölümler dolduktan sonra: kaydırma konumu, odak ve imleç yerine konur
+  focusBack(dlg, fk);
+  if (sel) { const x = document.activeElement; try { x.setSelectionRange(Math.min(sel[0], x.value.length), Math.min(sel[1], x.value.length)); } catch (e) {} }
+}
+
+/* ---- filtre ---- */
+function openFilter() {
+  const dlg = $("#dlgFilter"), groups = liveGroups(), blocks = [];
+  const chip = (tag) => h("button", { class: "chip h" + tagHue(tag), type: "button", "aria-pressed": String(UI.tagSel.has(tag.id)), text: tag.name,
+    onclick: (e) => { UI.tagSel.has(tag.id) ? UI.tagSel.delete(tag.id) : UI.tagSel.add(tag.id); e.currentTarget.setAttribute("aria-pressed", String(UI.tagSel.has(tag.id))); UI.limit = PAGE; saveUi(); invalidate(); } });
+  const withTags = groups.filter((g) => tagsOfGroup(g.id).length);
+  for (const g of withTags) blocks.push(h("div", { class: "tg-g" }, h("span", { class: "tg-n", text: g.name }), tagsOfGroup(g.id).map(chip)));
+  const loose = tagsOfGroup("");
+  if (loose.length) blocks.push(h("div", { class: "tg-g" }, blocks.length ? h("span", { class: "tg-n", text: t("no_group") }) : null, loose.map(chip)));
+  for (const id of [...UI.tagSel]) if (!liveTag(id)) UI.tagSel.delete(id);
+  if (UI.groupBy && UI.groupBy !== "st" && !withTags.some((g) => g.id === UI.groupBy)) { UI.groupBy = ""; saveUi(); }   // grup silinmiş ya da boşalmış
+  sheetFill(dlg, t("fl_title"),
+    sheetHead(dlg, t("fl_title"), h("button", { class: "btn quiet sm", type: "button", text: t("fl_clear"), onclick: () => { UI.tagSel.clear(); UI.limit = PAGE; saveUi(); invalidate(); sheetClose(dlg); } })),
+    h("div", { class: "sheet-b" },
+      h("div", { class: "fg first" }, h("p", { class: "fg-l", text: t("fl_tags") }),
+        blocks.length ? blocks : note("", t("fl_no_tags")),
+        withTags.length + (loose.length ? 1 : 0) > 1 ? note("", t("fl_tags_hint")) : null),
+      h("div", { class: "fg" }, h("label", { class: "fg-l", for: "flGroup", text: t("fl_group") }),
+        h("select", { class: "in", id: "flGroup", value: UI.groupBy, onchange: (e) => { UI.groupBy = e.target.value; UI.limit = PAGE; saveUi(); invalidate(); } },
+          h("option", { value: "", text: t("fl_group_none") }), h("option", { value: "st", text: t("fl_group_st") }),
+          withTags.map((g) => h("option", { value: g.id, text: g.name }))))));
+  sheetOpen(dlg);
+}
+
+/* ---- ayarlar ---- */
+const SetEls = { cloud: null, cfgDraft: "", cfgErr: "", key: "", prog: null };
+let themePref = lsGet(LS.theme);                         // değişkende de durur: depolama kapalıyken tema düğmeleri yine çalışsın
+function applyTheme() {
+  const th = themePref;
+  if (th === "light" || th === "dark") document.documentElement.setAttribute("data-theme", th);
+  else document.documentElement.removeAttribute("data-theme");
+  const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  const m = $('meta[name="theme-color"]');
+  if (m && bg) m.setAttribute("content", bg);
+}
+function setLang(v) {
+  lang = v; lsSet(LS.lang, v);
+  document.documentElement.lang = v;
+  buildShell(); render();
+  if ($("#dlgSet").open) drawSettings();
+}
+function openSettings() { const dlg = $("#dlgSet"); if (dlg.open) return; drawSettings(); sheetOpen(dlg); }
+function drawSettings() {
+  const dlg = $("#dlgSet"), th = themePref === "light" || themePref === "dark" ? themePref : "auto";
+  const seg = (fk, label, on, fn) => h("button", { class: "seg", type: "button", dataset: { fk }, "aria-pressed": String(on), text: label, onclick: fn });
+  SetEls.cloud = h("ol", { class: "steps" });
+  const fileIn = h("input", { type: "file", accept: "application/json,.json", hidden: true, onchange: (e) => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const fr = new FileReader();
+    fr.onload = () => { const k = Backup.import(String(fr.result)); toast(k < 0 ? t("bk_bad") : tn("bk_done", k)); };
+    fr.onerror = () => toast(t("bk_bad"));
+    fr.readAsText(f); e.target.value = "";
+  } });
+  const perm = "Notification" in window ? Notification.permission : "none";
+  const store = h("dd", { text: "…" });
+  if (navigator.storage && navigator.storage.persisted) navigator.storage.persisted().then((p) => { store.textContent = t(p ? "dv_yes" : "dv_no"); }).catch(() => { store.textContent = t("dv_no"); });
+  else store.textContent = t("dv_no");
+  drawCloud(true);                                        // adımlar önce dolar: sayfa yeniden kurulurken kaydırma konumu doğru yere döner
+  sheetFill(dlg, t("se_title"),
+    sheetHead(dlg, t("se_title")),
+    h("div", { class: "sheet-b" },
+      h("section", { class: "set-sec" }, h("h3", { text: t("se_cloud") }), h("p", { class: "hint", text: t("se_cloud_hint") }), SetEls.cloud),
+      h("section", { class: "set-sec" }, h("h3", { text: t("se_notif") }), h("p", { class: "hint", text: t("se_notif_hint") }),
+        perm === "granted" ? note("ok", t("se_notif_on"), "check") : perm === "denied" ? note("bad", t("se_notif_denied")) : perm === "none" ? note("", t("se_notif_none"))
+          : h("button", { class: "btn", type: "button", dataset: { fk: "notif" }, text: t("se_notif_btn"), onclick: () => Alarm.ask().then(drawSettings) })),
+      h("section", { class: "set-sec" }, h("h3", { text: t("se_tags") }), h("p", { class: "hint", text: t("se_tags_hint") }),
+        h("button", { class: "btn", type: "button", dataset: { fk: "tags-edit" }, text: t("se_tags_btn"), onclick: openTags })),
+      h("section", { class: "set-sec" }, h("h3", { text: t("se_look") }),
+        h("div", { class: "fr" }, h("span", { class: "fr-l", text: t("se_lang") }), seg("lang-tr", "Türkçe", lang === "tr", () => setLang("tr")), seg("lang-en", "English", lang === "en", () => setLang("en"))),
+        h("div", { class: "fr" }, h("span", { class: "fr-l", text: t("se_theme") }), [["auto", "th_auto"], ["light", "th_light"], ["dark", "th_dark"]].map(([v, key]) =>
+          seg("th-" + v, t(key), th === v, () => { themePref = v === "auto" ? null : v; lsSet(LS.theme, themePref); applyTheme(); drawSettings(); })))),
+      h("section", { class: "set-sec" }, h("h3", { text: t("se_backup") }), h("p", { class: "hint", text: t("se_backup_hint") }),
+        h("div", { class: "fr" }, h("button", { class: "btn", type: "button", dataset: { fk: "bk-export" }, text: t("bk_export"), onclick: Backup.export }),
+          h("button", { class: "btn", type: "button", dataset: { fk: "bk-import" }, text: t("bk_import"), onclick: () => fileIn.click() }), fileIn)),
+      h("section", { class: "set-sec" }, h("h3", { text: t("se_device") }),
+        h("dl", { class: "kv" }, h("dt", { text: t("dv_version") }), h("dd", { text: APP.ver }), h("dt", { text: t("dv_tz") }), h("dd", { text: DEV_TZ }), h("dt", { text: t("dv_storage") }), store),
+        h("div", { class: "fr mt" }, h("button", { class: "btn danger", type: "button", text: t("dv_reset"), onclick: resetDevice })))));
+}
+function drawCloud(force) {
+  const box = SetEls.cloud;
+  if (!box || (!force && !box.isConnected)) return;
+  const ae = document.activeElement;
+  if (!force && ae && box.contains(ae) && ae.tagName === "TEXTAREA") return;   // config yapıştırılırken yeniden çizme
+  const cfg = getCfg(), u = Cloud.user, steps = [];
+  const busyText = () => t("s4_busy") + (Cal.progress ? " " + Cal.progress : "");
+  /* Yalnızca gösterilen bir şey değiştiyse yeniden kurulur; yoksa sık gelen yenilemeler düğmeleri parmağın altından
+     alır. Gönderim sayacı ("3 / 12") yerinde güncellenir. */
+  const key = JSON.stringify([lang, cfg && cfg.projectId, u && (u.email || u.uid), Cloud.failed, Cloud.ready, Cloud.authErr, Cloud.err, Cloud.errMsg, Cloud.pulled,
+    u ? Cloud.dirty().length : 0, u && Cal.enabled(), u && Cal.enabled() ? Cal.pending().crit.length : 0, Cal.busy, Cal.err, Cal.errMsg, Cal.calId(), Cal.chores(), SetEls.cfgErr]);
+  if (!force && key === SetEls.key) { if (SetEls.prog) SetEls.prog.textContent = busyText(); return; }
+  SetEls.key = key; SetEls.prog = null;
+  const step = (cls, title, ...kids) => h("li", { class: cls }, h("h4", { text: title }), kids);
+  const p = (text, cls) => h("p", { class: cls || "", text });
+  const btn = (fk, cls, label, fn, off) => h("button", { class: "btn " + cls, type: "button", dataset: { fk }, disabled: !!off, text: label, onclick: fn });
+  // 1 · proje
+  if (cfg) steps.push(step("is-ok", t("s1_t"), p(cfg.projectId, "val"),
+    btn("cfg-remove", "quiet sm", t("s1_remove"), () => { if (!confirm(t("s1_remove_q"))) return; Cloud.signOut().then(() => { lsSet(LS.cfg, null); location.reload(); }); })));
+  else steps.push(step("", t("s1_t"), p(t("s1_p")),
+    h("textarea", { class: "in", rows: "6", placeholder: t("s1_ph"), "aria-label": t("s1_t"), spellcheck: "false", autocapitalize: "off", value: SetEls.cfgDraft, oninput: (e) => { SetEls.cfgDraft = e.target.value; } }),
+    SetEls.cfgErr ? p(SetEls.cfgErr, "err") : null,
+    h("div", { class: "fr mt" }, btn("cfg-save", "pri", t("s1_btn"), () => {
+      const c = parseFbConfig(SetEls.cfgDraft);
+      if (!c) { SetEls.cfgErr = t("s1_bad"); drawCloud(true); return; }
+      lsSet(LS.cfg, JSON.stringify(c));
+      if (!getCfg()) { SetEls.cfgErr = t("s1_nostore"); drawCloud(true); return; }   // tarayıcı saklamaya izin vermiyor
+      location.reload();                                  // Firebase temiz başlasın
+    }))));
+  // 2 · giriş
+  if (!cfg) steps.push(step("is-off", t("s2_t")));
+  else if (u) steps.push(step("is-ok", t("s2_t"), p(u.email || u.uid, "val"), btn("signout", "quiet sm", t("s2_out"), () => Cloud.signOut())));
+  else if (Cloud.failed) steps.push(step("", t("s2_t"), p(t("s2_fail"), "err"), btn("reload", "sm", t("reload"), () => location.reload())));
+  else if (!Cloud.ready) steps.push(step("", t("s2_t"), p(t("s2_load"))));
+  else steps.push(step("", t("s2_t"), p(t("s2_p")), Cloud.authErr ? p(Cloud.authErr, "err") : null, btn("signin", "pri", t("s2_btn"), () => Cloud.signIn())));
+  // 3 · notlar
+  const dirty = u ? Cloud.dirty().length : 0;
+  if (!u) steps.push(step("is-off", t("s3_t")));
+  else if (Cloud.err) steps.push(step("", t("s3_t"), p(Cloud.errMsg, "err"),
+    btn("sync-retry", "sm", t("retry"), () => { for (const it of Cloud.dirty()) delete it._bad; if (Cloud.unsub) Cloud.flush(true); else if (Cloud.col) { clearTimeout(Cloud.listenT); Cloud.listen(); } })));
+  else if (!Cloud.pulled) steps.push(step("", t("s3_t"), p(t("s3_wait"))));
+  else if (dirty) steps.push(step("", t("s3_t"), p(tn("s3_dirty", dirty))));
+  else steps.push(step("is-ok", t("s3_t"), p(t("s3_ok"))));
+  // 4 · takvim
+  if (!u) steps.push(step("is-off", t("s4_t"), p(t("s4_p"))));
+  else {
+    const on = Cal.enabled(), pend = on ? Cal.pending().crit.length : 0, kids = [];
+    kids.push(h("label", { class: "sw" }, h("input", { type: "checkbox", dataset: { fk: "cal-on" }, checked: on, disabled: !Cloud.pulled,
+      onchange: (e) => { Cal.setEnabled(e.target.checked); if (e.target.checked) Cal.kick({ gesture: true, explicit: true }); refresh(); } }), h("span", { text: t("s4_sw") })));
+    kids.push(p(t(on ? "s4_p" : "s4_off")));
+    if (on) {
+      if (Cal.busy) kids.push(SetEls.prog = p(busyText()));
+      else if (Cal.err) {
+        kids.push(p(Cal.errMsg, "err"));
+        if (Cal.err === "api") kids.push(h("p", null, h("a", { class: "link", target: "_blank", rel: "noopener", text: t("e_cal_api_link"),
+          href: "https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=" + encodeURIComponent(cfg.projectId) })));
+        if (Cal.err === "scope") kids.push(h("div", { class: "fr" }, btn("cal-scope", "pri sm", t("e_cal_scope_btn"), () => Cal.kick({ gesture: true, consent: true, explicit: true }))));
+      } else if (pend) kids.push(p(tn("s4_pending", pend)));
+      else if (Cal.chores()) kids.push(p(t("b_orphan")));
+      else kids.push(p(t(Cal.calId() ? "s4_ok" : "s4_idle"), "val"));
+      kids.push(h("div", { class: "fr" },
+        pend || Cal.err || Cal.chores() ? btn("cal-send", "pri sm", t("send"), () => Cal.kick({ gesture: true, explicit: true }), Cal.busy) : null,
+        btn("cal-test", "sm", t("s4_test"), () => { Cal.test().then((ok) => { if (ok) toast(t("s4_test_done")); }); }, Cal.busy || !Cloud.pulled),
+        btn("cal-resync", "quiet sm", t("s4_resync"), () => Cal.kick({ gesture: true, full: true, explicit: true }), Cal.busy || !Cloud.pulled)));
+    }
+    steps.push(step(on && !Cal.err && !pend && !Cal.chores() && Cal.calId() && !Cal.busy ? "is-ok" : "", t("s4_t"), kids));
+  }
+  redraw(box, () => box.replaceChildren(...steps));
+}
+async function resetDevice() {
+  const unsent = Cloud.user ? Cloud.dirty().length : 0;   // girişliyken: buluta çıkmamış değişiklik de silinecek
+  if (!confirm((unsent ? tn("dv_reset_dirty", unsent) + "\n\n" : "") + t("dv_reset_q1")) || !confirm(t("dv_reset_q2"))) return;
+  try { if (getCfg() && !Cloud.ready) await Cloud.init(); } catch (e) {}   // çıkış yapabilmek için (SDK önbellekten de yüklenir)
+  await Cloud.signOut();
+  await DB.wipe();
+  for (const k of Object.values(LS)) lsSet(k, null);
+  location.reload();
+}
+
+/* ---- etiket yöneticisi ---- */
+const TagMgr = { hueOpen: "", drafts: {} };              // drafts: ekleme alanlarına yazılıp henüz eklenmemiş metin (yeniden çizimde kaybolmasın)
+function openTags() { drawTagMgr(); sheetOpen($("#dlgTags"), () => { if (Ed.n) Ed.drawTags(); invalidate(); }); }
+function drawTagMgr() {
+  const dlg = $("#dlgTags"), groups = liveGroups();
+  const now = (it) => S.items.get(keyOf(it)) || it;      // çizimden sonra değişmiş olabilir: hep güncel kayıt üzerine yazılır
+  const upd = (it, patch) => commit(Object.assign(clone(publicCopy(now(it))), patch));
+  const focusFk = (fk) => focusBack(dlg, fk);
+  const gidOf = (tag) => (tagGroup(now(tag)) || {}).id || "";
+  const dupTag = (name, gid, except) => liveTags().some((x) => x.id !== except && fold(x.name) === fold(name) && ((tagGroup(x) || {}).id || "") === gid);
+  const dupGroup = (name, except) => liveGroups().some((x) => x.id !== except && fold(x.name) === fold(name));
+  const draft = (fk) => ({ value: TagMgr.drafts[fk] || "", oninput: (e) => { TagMgr.drafts[fk] = e.target.value; } });
+  /* rename: ad alanındaki metni kaydeder. Bazı dokunmatik tarayıcılarda başka bir denetime dokunmak alanı "bırakmaz";
+     bu yüzden aynı satırdaki taşıma ve silme de önce bunu çağırır. */
+  const rename = (tag, inp) => {
+    const v = inp.value.trim(), cur = now(tag);
+    if (!v || v === cur.name) { inp.value = cur.name; return; }
+    if (dupTag(v, gidOf(tag), tag.id)) { inp.value = cur.name; toast(t("tm_dup")); return; }
+    upd(tag, { name: v });
+  };
+  const tagRow = (tag) => {
+    const name = h("input", { type: "text", value: tag.name, maxlength: "40", dataset: { fk: "t-name-" + tag.id }, "aria-label": t("ed_tag_ph"), onchange: () => rename(tag, name) });
+    return h("div", { class: "tm-t" }, h("span", { class: "swatch h" + tagHue(tag) }), name,
+      groups.length ? h("select", { dataset: { fk: "t-move-" + tag.id }, "aria-label": t("a_move"), value: gidOf(tag), onchange: (e) => {
+        rename(tag, name);
+        if (dupTag(now(tag).name, e.target.value, tag.id)) { e.target.value = gidOf(tag); toast(t("tm_dup")); return; }
+        upd(tag, { g: e.target.value }); drawTagMgr();
+      } }, h("option", { value: "", text: t("no_group") }), groups.map((g) => h("option", { value: g.id, text: g.name }))) : null,
+      h("button", { class: "ib", type: "button", "aria-label": t("a_del_tag"), onclick: () => {
+        if (!confirm(t("tm_del_tag_q", { name: now(tag).name }))) return;
+        const gid = gidOf(tag) || "-";
+        commit({ k: "t", id: tag.id, del: true }); UI.tagSel.delete(tag.id); saveUi(); drawTagMgr(); focusFk("t-add-" + gid);
+      } }, icon("trash")));
+  };
+  const addRow = (gid) => {
+    const fk = "t-add-" + (gid || "-");
+    const inp = h("input", Object.assign({ type: "text", placeholder: t("tm_tag_ph"), "aria-label": t("tm_tag_ph"), maxlength: "40", enterkeyhint: "done", dataset: { fk }, onkeydown: (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const name = inp.value.trim(); if (!name) return;
+      if (dupTag(name, gid, "")) { toast(t("tm_dup")); return; }
+      commit({ k: "t", id: newId(), name, g: gid, o: 0 });
+      delete TagMgr.drafts[fk];
+      drawTagMgr();
+    } }, draft(fk)));
+    return h("div", { class: "tm-t" }, icon("plus", "swatch-plus"), inp);
+  };
+  const cards = groups.map((g) => {
+    const name = h("input", { type: "text", value: g.name, maxlength: "40", dataset: { fk: "g-name-" + g.id }, "aria-label": t("tm_group_ph"), onchange: () => {
+      const v = name.value.trim(), cur = now(g);
+      if (!v || v === cur.name) { name.value = cur.name; return; }
+      if (dupGroup(v, g.id)) { name.value = cur.name; toast(t("tm_dup")); return; }
+      upd(g, { name: v });
+    } });
+    return h("div", { class: "tm-g" },
+      h("div", { class: "tm-gh" },
+        h("button", { class: "ib", type: "button", dataset: { fk: "g-color-" + g.id }, "aria-label": t("a_color"), "aria-expanded": String(TagMgr.hueOpen === g.id), onclick: () => { TagMgr.hueOpen = TagMgr.hueOpen === g.id ? "" : g.id; drawTagMgr(); } }, h("span", { class: "swatch h" + g.hue })),
+        name,
+        h("button", { class: "ib", type: "button", "aria-label": t("a_del_group"), onclick: () => {
+          if (!confirm(t("tm_del_group_q", { name: now(g).name }))) return;
+          commit({ k: "g", id: g.id, del: true }); if (UI.groupBy === g.id) { UI.groupBy = ""; saveUi(); } drawTagMgr(); focusFk("g-add");
+        } }, icon("trash"))),
+      TagMgr.hueOpen === g.id ? h("div", { class: "hues", role: "group", "aria-label": t("a_color") }, Array.from({ length: HUE_COUNT }, (_, i) =>
+        h("button", { type: "button", "aria-pressed": String(g.hue === i), "aria-label": t("hue_" + i), onclick: () => { upd(g, { hue: i }); TagMgr.hueOpen = ""; drawTagMgr(); focusFk("g-color-" + g.id); } }, h("span", { class: "swatch h" + i })))) : null,
+      tagsOfGroup(g.id).map(tagRow), addRow(g.id));
+  });
+  const loose = tagsOfGroup("");
+  const gIn = h("input", Object.assign({ class: "in grow", type: "text", dataset: { fk: "g-add" }, placeholder: t("tm_group_ph"), "aria-label": t("tm_group_ph"), maxlength: "40", enterkeyhint: "done", onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); addGroup(); } } }, draft("g-add")));
+  const addGroup = () => {
+    const name = gIn.value.trim(); if (!name) return;
+    if (dupGroup(name, "")) { toast(t("tm_dup")); return; }
+    const used = new Set(groups.map((g) => g.hue));
+    let hue = 1; for (let i = 1; i < HUE_COUNT; i++) if (!used.has(i)) { hue = i; break; }
+    commit({ k: "g", id: newId(), name, hue, o: 0 });
+    delete TagMgr.drafts["g-add"];
+    drawTagMgr(); focusFk("g-add");
+  };
+  sheetFill(dlg, t("se_tags"), sheetHead(dlg, t("se_tags")),
+    h("div", { class: "sheet-b" },
+      h("p", { class: "note mt" }, icon("info"), h("span", { text: t("se_tags_hint") })),
+      cards,
+      h("div", { class: "tm-g" }, h("div", { class: "tm-gh" }, h("span", { class: "swatch h0" }), h("span", { class: "fixed", text: t("no_group") })), loose.map(tagRow), addRow("")),
+      h("div", { class: "fr mt" }, gIn, h("button", { class: "btn", type: "button", text: t("tm_add_group"), onclick: addGroup }))));
+}
+
+/* ============================== 10 · açılış ============================== */
+let chan = null;
+function openFromHash() {
+  const m = /^#n=([0-9a-v]{5,64})$/.exec(location.hash || "");
+  if (!m) return;
+  try { history.replaceState(history.state, "", location.pathname + location.search); } catch (e) {}
+  if (S.notes.has(m[1])) openEditor(m[1]);
+}
+async function boot() {
+  applyTheme();
+  document.documentElement.lang = lang;
+  buildShell();
+  if (await DB.open()) {                                  // veritabanı açılırken yapılmış bir değişiklik varsa (yavaş cihaz) bellekteki geçerlidir
+    for (const r of await DB.all("kv")) if (r && typeof r.k === "string" && !KV.m.has(r.k)) KV.m.set(r.k, r.v);
+    for (const it of await DB.all("items")) {
+      try { if (validItem(it)) { const cur = S.items.get(keyOf(it)); if (!cur || cmpVer(it, cur) > 0) index(it); } }
+      catch (e) { console.warn("[centik] bozuk kayıt atlandı", e); }
+    }
+  } else DB.dead = true;
+  S.device = KV.get("device", "");
+  if (typeof S.device !== "string" || !S.device) { S.device = newId().slice(9); KV.set("device", S.device); }
+  const ui = KV.get("ui", null);
+  if (ui && typeof ui === "object") {
+    UI.tab = ui.tab === "notes" ? "notes" : "agenda";
+    UI.status = ["active", "all"].concat(STATUSES).includes(ui.status) ? ui.status : "active";
+    UI.tagSel = new Set((Array.isArray(ui.tagSel) ? ui.tagSel : []).filter(liveTag));
+    UI.groupBy = typeof ui.groupBy === "string" ? ui.groupBy : "";
+    UI.hintOff = !!ui.hintOff;
+  }
+  render();
+
+  try {                                                   // aynı cihazdaki diğer sekmeler
+    chan = new BroadcastChannel(NS);
+    chan.onmessage = async (e) => {
+      const key = e.data && e.data.key; if (typeof key !== "string") return;
+      const it = await DB.get("items", key), cur = S.items.get(key);
+      if (it === undefined) return;                       // okunamadı: "silinmiş" sayılmaz
+      if (!it) { if (cur) { unindex(key); invalidate(); } return; }
+      if (!validItem(it)) return;
+      const c = cur ? cmpVer(it, cur) : 1;
+      if (c < 0) { persist(cur); return; }                // iki sekme aynı anda yazdı ve diskte eskisi kaldı: yenisi yeniden yazılır
+      index(it); invalidate();
+      if (c > 0 && it.k === "n" && Ed.n && Ed.n.id === it.id) Ed.remote(it);
+    };
+  } catch (e) {}
+
+  window.addEventListener("hashchange", openFromHash);
+  window.addEventListener("online", () => { if (getCfg() && !Cloud.ready) Cloud.init(); Cloud.flush(true); Cal.kick({}); refresh(); });
+  window.addEventListener("offline", refresh);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") { Alarm.tick(); invalidate(); }
+    else { Ed.hide(); DB.flush(); }                       // telefonda uygulama arka plana atılırken son fırsat
+  });
+  window.addEventListener("pagehide", () => { Ed.hide(); DB.flush(); });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme); } catch (e) {}
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { closeMenu(true); return; }
+    const inField = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "");
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "z" || e.key === "Z") && toastAct && !inField) { e.preventDefault(); toastAct(); return; }   // Ctrl+Z: ekrandaki "Geri al"
+    if (topSheet() || e.ctrlKey || e.metaKey || e.altKey || inField) return;
+    if (e.key === "/") { e.preventDefault(); $("#q").focus(); }
+    else if (e.key === "n") { e.preventDefault(); openEditor(null); }
+  });
+  let lastDay = today();
+  setInterval(() => {                                     // dakikada bir: gün değişimi, ajandadaki "geciken"ler, süresi dolan Takvim oturumu (şeritler)
+    if (today() !== lastDay) { lastDay = today(); invalidate(); }
+    else if (UI.tab === "agenda" && document.visibilityState === "visible" && !topSheet()) invalidate();
+    else refresh();
+  }, 60000);
+
+  openFromHash();
+  Cloud.init();
+  Alarm.start();
+
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    let controlled = !!navigator.serviceWorker.controller;   // ilk kurulumda değil, sonraki sürüm devraldığında haber ver
+    navigator.serviceWorker.register("./sw.js").then((reg) => { if (navigator.onLine && reg.active) reg.active.postMessage({ type: "warm", sdk: FB_VER }); }).catch(() => {});
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (controlled) { UI.update = true; refresh(); } controlled = true; });
+    navigator.serviceWorker.addEventListener("message", (e) => { const d = e.data || {}; if (d.type === "open" && typeof d.id === "string" && S.notes.has(d.id)) { Alarm.dismiss(d.id); openEditor(d.id); } });
+  }
+  if (lsGet(LS.debug) === "1") window.__centik = { S, UI, KV, DB, Cloud, Cal, Alarm, Ed, Backup, fn: { commit, index, setStatus, deleteNote, stepDate, nextDue, zonedToUtc, parseFbConfig, hash, newId, fold, matches, completeNote, blankNote, sanitize, validItem, cmpVer, cleanRems, isLate, dueAt, dueLocal, today, addDays, t } };
+}
+boot();
+</script>
+</body>
+</html>
